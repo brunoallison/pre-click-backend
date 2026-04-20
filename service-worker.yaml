@@ -1,0 +1,186 @@
+# KRM Cloud Run — pedido-worker
+# Mesma imagem que pedido-api; command override para "npm run worker".
+# CPU always-on (cpu-throttling: false) pois o BullMQ precisa de CPU contínua.
+# ingress: internal — sem tráfego externo direto.
+#
+# Substituir PLACEHOLDERS igual a service-api.yaml.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: pedido-worker
+  annotations:
+    run.googleapis.com/ingress: internal
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "3"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/container-dependencies: '{"pedido-worker":["datadog-agent","cloud-sql-proxy"]}'
+    spec:
+      timeoutSeconds: 3600
+      containerConcurrency: 1
+      containers:
+      - name: pedido-worker
+        image: REGION-docker.pkg.dev/PROJECT_ID/PROJECT_PREFIX/pedido-api:SHA
+        command: ["npm", "run", "worker"]
+        volumeMounts:
+        - name: dd-logs
+          mountPath: /var/lib/datadog-agent/logs
+        - name: dd-run
+          mountPath: /opt/datadog-agent/run
+        env:
+        - name: NODE_ENV
+          value: "NODE_ENV"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: LOG_FILE
+          value: "/var/lib/datadog-agent/logs/worker.log"
+        - name: POSTGRES_HOST
+          value: "127.0.0.1"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_DATABASE
+          value: "POSTGRES_DATABASE"
+        - name: POSTGRES_USERNAME
+          value: "POSTGRES_USERNAME"
+        - name: POSTGRES_SCHEMA
+          value: "public"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: POSTGRES_PASSWORD
+        - name: CLOUD_SQL_CONNECTION_NAME
+          value: "CLOUD_SQL_CONNECTION_NAME"
+        - name: REDIS_HOST
+          value: "REDIS_HOST"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_TLS
+          value: "true"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: REDIS_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: JWT_SECRET
+        - name: GCS_BUCKET_NAME
+          value: "GCS_BUCKET_NAME"
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: ANTHROPIC_API_KEY
+        - name: NODE_OPTIONS
+          value: "--require dd-trace/init"
+        - name: DD_AGENT_HOST
+          value: "localhost"
+        - name: DD_TRACE_AGENT_URL
+          value: "unix:///opt/datadog-agent/run/apm.socket"
+        - name: DD_LOGS_INJECTION
+          value: "true"
+        - name: DD_ENV
+          value: "NODE_ENV"
+        - name: DD_VERSION
+          value: "SHA"
+        - name: DD_SERVICE
+          value: "pedido-worker"
+        - name: DD_SITE
+          value: "DD_SITE"
+        - name: DD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: DD_API_KEY
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+
+      - name: datadog-agent
+        image: gcr.io/datadoghq/serverless-init:latest
+        volumeMounts:
+        - name: dd-logs
+          mountPath: /var/lib/datadog-agent/logs
+        - name: dd-run
+          mountPath: /opt/datadog-agent/run
+        env:
+        - name: DD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: DD_API_KEY
+        - name: DD_SITE
+          value: "DD_SITE"
+        - name: DD_SERVICE
+          value: "pedido-worker"
+        - name: DD_VERSION
+          value: "SHA"
+        - name: DD_SOURCE
+          value: "nodejs"
+        - name: DD_SERVERLESS_LOG_PATH
+          value: "/var/lib/datadog-agent/logs/*.log"
+        - name: DD_APM_RECEIVER_SOCKET
+          value: "/opt/datadog-agent/run/apm.socket"
+        - name: DD_HEALTH_PORT
+          value: "12345"
+        - name: DD_ENV
+          value: "NODE_ENV"
+        - name: DD_LOG_LEVEL
+          value: "warn"
+        - name: DD_LOGS_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_DISK_QUEUE_ENABLED
+          value: "true"
+        - name: DD_LOGS_CONFIG_DISK_QUEUE_PATH
+          value: "/var/lib/datadog-agent/logs"
+        - name: DD_LOGS_CONFIG_DISK_QUEUE_MAX_SIZE
+          value: "256MB"
+        - name: DD_APM_ENABLED
+          value: "true"
+        - name: DD_APM_NON_LOCAL_TRAFFIC
+          value: "true"
+        - name: DD_CONTAINER_EXCLUDE_LOGS
+          value: "name:datadog-agent"
+        - name: DD_CONTAINER_INCLUDE_LOGS
+          value: "name:pedido-worker"
+        - name: DD_PROCESS_AGENT_ENABLED
+          value: "false"
+        - name: DD_ORCHESTRATOR_EXPLORER_ENABLED
+          value: "false"
+        - name: DD_WORKLOADMETA_REMOTE_TIMEOUT_SECONDS
+          value: "2"
+        startupProbe:
+          tcpSocket:
+            port: 12345
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
+        args:
+        - "CLOUD_SQL_CONNECTION_NAME?port=5432"
+        resources:
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+
+      volumes:
+      - name: dd-logs
+        emptyDir:
+          sizeLimit: 256Mi
+      - name: dd-run
+        emptyDir:
+          sizeLimit: 128Mi

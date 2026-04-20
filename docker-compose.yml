@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pedido-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pedido
+      POSTGRES_PASSWORD: pedido
+      POSTGRES_DB: pedido
+    ports:
+      - '5432:5432'
+    volumes:
+      - pedido_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pedido -d pedido']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: pedido-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - pedido_redis:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Fake GCS server para desenvolvimento local (emula Google Cloud Storage)
+  # Docs: https://github.com/fsouza/fake-gcs-server
+  # Configurar STORAGE_EMULATOR_HOST=http://localhost:4443 no .env local
+  # e GCS_BUCKET_NAME=pedido-dev para que o SDK GCS roteie para aqui
+  fake-gcs:
+    image: fsouza/fake-gcs-server:latest
+    container_name: pedido-fake-gcs
+    restart: unless-stopped
+    ports:
+      - '4443:4443'
+    command:
+      - '-scheme'
+      - 'http'
+      - '-port'
+      - '4443'
+      - '-backend'
+      - 'memory'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4443/storage/v1/b']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pedido_pg:
+  pedido_redis:
