@@ -58,6 +58,10 @@ const envSchema = z.object({
   // CORS
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   FRONTEND_URL: z.string().optional(),
+
+  // GCS local emulator (fake-gcs-server em dev local e testes E2E)
+  // Definir como 'localhost:4443' quando usar fake-gcs-server. Em produção, deixar vazio.
+  STORAGE_EMULATOR_HOST: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

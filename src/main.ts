@@ -5,6 +5,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { env } from './config/env.js';
 import { AppDataSource } from './database/data-source.js';
+import { createRedisClient } from './database/redis-client.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
 import { requestLogger } from './middlewares/request-logger.middleware.js';
 import { adminRouter } from './modules/admin/admin.routes.js';
@@ -26,6 +27,8 @@ import { logger } from './utils/logger.js';
 async function bootstrap(): Promise<void> {
   await AppDataSource.initialize();
   logger.info('database: connected');
+
+  createRedisClient();
 
   registerRepositories(AppDataSource);
 

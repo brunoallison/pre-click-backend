@@ -9,9 +9,7 @@ import { ListOrdersQuery, type Paginated, type OrderOutput } from '../dto/orders
 export class ListOrdersTask extends Task<Paginated<OrderOutput>> {
   protected validations = [verifyQuery(ListOrdersQuery)];
 
-  constructor(
-    @Inject('OrderRepository') private readonly orders: Repository<Order>,
-  ) {
+  constructor(@Inject('OrderRepository') private readonly orders: Repository<Order>) {
     super();
   }
 

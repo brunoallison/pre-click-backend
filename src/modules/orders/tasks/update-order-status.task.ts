@@ -11,9 +11,7 @@ import { UpdateOrderStatusInput, isValidTransition, type OrderOutput } from '../
 export class UpdateOrderStatusTask extends Task<OrderOutput> {
   protected validations = [verifyBody(UpdateOrderStatusInput, true)];
 
-  constructor(
-    @Inject('OrderRepository') private readonly orders: Repository<Order>,
-  ) {
+  constructor(@Inject('OrderRepository') private readonly orders: Repository<Order>) {
     super();
   }
 

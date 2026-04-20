@@ -104,6 +104,11 @@ export class CopyOrderItemsTask extends Task<CopyOrderOutput> {
       }
     }
 
-    return { copied, skipped_forbidden: skippedForbidden, skipped_conflict: skippedConflict, conflicts };
+    return {
+      copied,
+      skipped_forbidden: skippedForbidden,
+      skipped_conflict: skippedConflict,
+      conflicts,
+    };
   }
 }

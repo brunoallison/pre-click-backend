@@ -41,10 +41,10 @@ export class CreateExportTask extends Task<CreateExportOutput> {
     @Inject('ExportBatchRepository') private readonly batches: Repository<ExportBatch>,
     @Inject('ExportBatchFileRepository')
     private readonly batchFiles: Repository<ExportBatchFile>,
-    private readonly expansion: OrderExpansionService,
-    private readonly builder: ExportBuilderService,
-    private readonly writer: ClickWriterProvider,
-    private readonly gcs: GcsProvider,
+    @Inject(OrderExpansionService) private readonly expansion: OrderExpansionService,
+    @Inject(ExportBuilderService) private readonly builder: ExportBuilderService,
+    @Inject(ClickWriterProvider) private readonly writer: ClickWriterProvider,
+    @Inject(GcsProvider) private readonly gcs: GcsProvider,
   ) {
     super();
   }

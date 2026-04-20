@@ -15,7 +15,7 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
   constructor(
     @Inject('OrderRepository') private readonly orders: Repository<Order>,
     @Inject('OrderItemRepository') private readonly items: Repository<OrderItem>,
-    private readonly expansion: OrderExpansionService,
+    @Inject(OrderExpansionService) private readonly expansion: OrderExpansionService,
   ) {
     super();
   }

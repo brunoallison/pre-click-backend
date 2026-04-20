@@ -18,6 +18,9 @@ export function repositoryToken<T>(entity: EntityTarget<T>): string {
 }
 
 export function registerRepositories(dataSource: DataSource): void {
+  // Registra o DataSource para uso direto (ex: health check)
+  container.register('DataSource', { useValue: dataSource });
+
   for (const entity of Object.values(entities)) {
     if (typeof entity !== 'function') continue;
     const token = `${entity.name}Repository`;

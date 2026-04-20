@@ -30,7 +30,7 @@ export class DownloadFileTask extends Task<{ buffer: Buffer; fileName: string }>
     @Inject('ExportBatchRepository') private readonly batches: Repository<ExportBatch>,
     @Inject('ExportBatchFileRepository')
     private readonly batchFiles: Repository<ExportBatchFile>,
-    private readonly gcs: GcsProvider,
+    @Inject(GcsProvider) private readonly gcs: GcsProvider,
   ) {
     super();
   }

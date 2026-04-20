@@ -27,7 +27,7 @@ export class DownloadZipTask extends Task<never> {
     @Inject('ExportBatchRepository') private readonly batches: Repository<ExportBatch>,
     @Inject('ExportBatchFileRepository')
     private readonly batchFiles: Repository<ExportBatchFile>,
-    private readonly gcs: GcsProvider,
+    @Inject(GcsProvider) private readonly gcs: GcsProvider,
   ) {
     super();
   }

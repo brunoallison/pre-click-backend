@@ -16,7 +16,7 @@ export class GetOrderSummaryTask extends Task<OrderSummaryOutput> {
     @Inject('OrderItemRepository') private readonly items: Repository<OrderItem>,
     @Inject('ProductRepository') private readonly products: Repository<Product>,
     @Inject('StoreBudgetRepository') private readonly budgets: Repository<StoreBudget>,
-    private readonly expansion: OrderExpansionService,
+    @Inject(OrderExpansionService) private readonly expansion: OrderExpansionService,
   ) {
     super();
   }
@@ -45,9 +45,7 @@ export class GetOrderSummaryTask extends Task<OrderSummaryOutput> {
     // Busca produtos para calcular RRP
     const productIds = [...new Set(orderItems.map((i) => i.product_id))];
     const productRows = await this.products.findByIds(productIds);
-    const rrpByProduct = new Map<string, number>(
-      productRows.map((p) => [p.id, parseFloat(p.rrp)]),
-    );
+    const rrpByProduct = new Map<string, number>(productRows.map((p) => [p.id, parseFloat(p.rrp)]));
 
     let totalPieces = 0;
     let totalRrp = 0;

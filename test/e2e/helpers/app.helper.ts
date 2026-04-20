@@ -26,6 +26,10 @@ import { healthRouter } from '../../../src/modules/health/health.routes.js';
 import { GcsProvider } from '../../../src/providers/gcs/gcs.provider.js';
 import { FakeGcsProvider } from '../../../src/providers/gcs/__fakes__/fake-gcs.provider.js';
 import { FakeProvider } from '../../../src/decorators/fake-provider.decorator.js';
+import { OrderExpansionService } from '../../../src/services/order-expansion.service.js';
+import { ExportBuilderService } from '../../../src/services/export-builder.service.js';
+import { OrderValidationService } from '../../../src/services/order-validation.service.js';
+import { ClickWriterProvider } from '../../../src/providers/excel/click-writer.provider.js';
 
 export interface TestContext {
   app: Express;
@@ -77,6 +81,26 @@ export async function buildTestApp(): Promise<TestContext> {
   FakeProvider(GcsProvider.name, fakeGcs);
   // Registra também pelo token string que alguns tasks usam
   container.register('GcsProvider', { useValue: fakeGcs });
+
+  // 5. Registra serviços transversais manualmente.
+  // O Vitest/esbuild não emite emitDecoratorMetadata (necessário para tsyringe
+  // resolver dependências por tipo). Registramos instâncias concretas no container
+  // para que as Tasks resolvam corretamente.
+  const gradeSizeQtyRepo = dataSource.getRepository(entities.GradeSizeQty);
+  // O registerRepositories já registrou 'GradeSizeQtyRepository', mas garantimos
+  container.register('GradeSizeQtyRepository', { useValue: gradeSizeQtyRepo });
+
+  const expansionService = new OrderExpansionService(gradeSizeQtyRepo);
+  container.register(OrderExpansionService, { useValue: expansionService });
+
+  const exportBuilder = new ExportBuilderService();
+  container.register(ExportBuilderService, { useValue: exportBuilder });
+
+  const orderValidation = new OrderValidationService();
+  container.register(OrderValidationService, { useValue: orderValidation });
+
+  const clickWriter = new ClickWriterProvider();
+  container.register(ClickWriterProvider, { useValue: clickWriter });
 
   // 5. Monta Express
   const app = express();

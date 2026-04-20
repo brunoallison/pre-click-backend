@@ -1,5 +1,7 @@
 import { Router } from 'express';
-import { AppDataSource } from '../../database/data-source.js';
+import { container } from '../../utils/di.js';
+import { redisClient } from '../../database/redis-client.js';
+import type { DataSource } from 'typeorm';
 
 export const healthRouter = Router();
 
@@ -8,10 +10,27 @@ healthRouter.get('/', (_req, res) => {
 });
 
 healthRouter.get('/ready', async (_req, res) => {
+  let dbOk = false;
+  let redisOk = false;
+
   try {
-    await AppDataSource.query('SELECT 1');
-    res.json({ status: 'ready', db: 'up' });
+    const ds = container.resolve<DataSource>('DataSource');
+    await ds.query('SELECT 1');
+    dbOk = true;
   } catch {
-    res.status(503).json({ status: 'degraded', db: 'down' });
+    // intencionalmente silenciado — estado capturado em dbOk
   }
+
+  try {
+    const pong = await redisClient.ping();
+    redisOk = pong === 'PONG';
+  } catch {
+    // intencionalmente silenciado — estado capturado em redisOk
+  }
+
+  const status = dbOk && redisOk ? 200 : 503;
+  res.status(status).json({
+    db: dbOk ? 'ok' : 'fail',
+    redis: redisOk ? 'ok' : 'fail',
+  });
 });

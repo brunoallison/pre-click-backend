@@ -9,9 +9,7 @@ import { CreateOrderInput, type OrderOutput } from '../dto/orders.dto.js';
 export class CreateOrderTask extends Task<OrderOutput> {
   protected validations = [verifyBody(CreateOrderInput, true)];
 
-  constructor(
-    @Inject('OrderRepository') private readonly orders: Repository<Order>,
-  ) {
+  constructor(@Inject('OrderRepository') private readonly orders: Repository<Order>) {
     super();
   }
 
@@ -59,4 +57,3 @@ export class CreateOrderTask extends Task<OrderOutput> {
     };
   }
 }
-
