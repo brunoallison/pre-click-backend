@@ -5,6 +5,7 @@ import { HttpError } from '../../../utils/error.js';
 import { Inject, Injectable } from '../../../utils/di.js';
 import { Task, type BaseInput } from '../../../utils/task.js';
 import { verifyBody } from '../../../utils/schema.js';
+import { OrderExpansionService } from '../../../services/order-expansion.service.js';
 import { UpsertOrderItemInput, type OrderItemOutput } from '../dto/orders.dto.js';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
   constructor(
     @Inject('OrderRepository') private readonly orders: Repository<Order>,
     @Inject('OrderItemRepository') private readonly items: Repository<OrderItem>,
+    private readonly expansion: OrderExpansionService,
   ) {
     super();
   }
@@ -22,6 +24,17 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
     const tenantId = input.headers.tenantId as string;
     const { orderId } = input.params as { orderId: string };
     const dto = input.body as UpsertOrderItemInput;
+
+    // Guard: override de produto proibido exige justificativa
+    if (dto.override_forbidden === true) {
+      const reason = dto.override_reason?.trim() ?? '';
+      if (reason.length < 3) {
+        throw HttpError.Unprocessable(
+          'override_reason_required',
+          'Override de produto proibido exige justificativa mínima de 3 caracteres.',
+        );
+      }
+    }
 
     const order = await this.orders.findOne({ where: { id: orderId, tenant_id: tenantId } });
     if (!order) throw HttpError.NotFound('not_found', 'Pedido não encontrado');
@@ -54,6 +67,10 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
     }
     const saved = await this.items.save(entity);
 
+    // Calcula expanded_qty real via join com grade_size_qty
+    const gradeTotals = await this.expansion.gradeQtyTotals([saved.grade_id]);
+    const gradeQty = gradeTotals.get(saved.grade_id) ?? 0;
+
     return {
       id: saved.id,
       product_id: saved.product_id,
@@ -62,7 +79,7 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
       rdd_override_serial: saved.rdd_override_serial,
       override_forbidden: saved.override_forbidden,
       override_reason: saved.override_reason,
-      expanded_qty: 0,
+      expanded_qty: saved.multiplier * gradeQty,
       updated_at: saved.updated_at.toISOString(),
     };
   }

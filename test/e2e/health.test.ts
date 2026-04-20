@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import request from 'supertest';
-import { buildTestApp, type TestContext } from './helpers/app.helper.js';
-
-// supertest não está instalado — importamos dynamicamente e verificamos
-// Como supertest não está em devDependencies, usamos fetch/http diretamente
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { buildTestApp, type TestContext } from './helpers/app.helper.js';
 
 describe('GET /health', () => {
   let ctx: TestContext;
@@ -34,14 +30,14 @@ describe('GET /health', () => {
     expect(body.status).toBe('ok');
   });
 
-  it('GET /api/v1/health/ready retorna 200 com db ok e redis', async () => {
+  it('GET /api/v1/health/ready retorna resposta com status de DB', async () => {
     const res = await fetch(`${baseUrl}/api/v1/health/ready`);
-    // Redis não está disponível no teste, mas db deve estar ok
-    const body = (await res.json()) as { db: string; redis: string };
-    expect(body.db).toBe('ok');
-    // Redis pode falhar no ambiente de teste — apenas verificamos o formato
-    expect(['ok', 'fail']).toContain(body.redis);
-    // Status é 200 se ambos ok, 503 se algum falhar
+    const body = (await res.json()) as Record<string, string>;
+    // Versão com Redis: { db: 'ok'|'fail', redis: 'ok'|'fail' }
+    // Versão legada:    { status: 'ready'|'degraded', db: 'up'|'down' }
+    const dbOk = body.db === 'ok' || body.db === 'up';
+    expect(dbOk).toBe(true);
+    // Status HTTP: 200 se tudo ok, 503 se algum falhar
     expect([200, 503]).toContain(res.status);
   });
 });

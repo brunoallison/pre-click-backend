@@ -127,8 +127,8 @@ describe('Orders E2E', () => {
       productId = prodResult[0].id;
 
       const gradeResult = await ctx.dataSource.query<Array<{ id: string }>>(
-        `INSERT INTO grade (collection_id, code, is_system) VALUES ($1, $2, $3) RETURNING id`,
-        [collectionId, 'G-M', true],
+        `INSERT INTO grade (collection_id, code, is_system, total_pieces) VALUES ($1, $2, $3, $4) RETURNING id`,
+        [collectionId, 'G-M', true, 4],
       );
       gradeId = gradeResult[0].id;
 

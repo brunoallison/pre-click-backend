@@ -69,8 +69,8 @@ describe('POST /orders/:id/copy-from E2E', () => {
     productId = prodResult[0].id;
 
     const gradeResult = await ctx.dataSource.query<Array<{ id: string }>>(
-      `INSERT INTO grade (collection_id, code, is_system) VALUES ($1, $2, $3) RETURNING id`,
-      [collectionId, 'G-S', true],
+      `INSERT INTO grade (collection_id, code, is_system, total_pieces) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [collectionId, 'G-S', true, 6],
     );
     gradeId = gradeResult[0].id;
 
@@ -141,8 +141,8 @@ describe('POST /orders/:id/copy-from E2E', () => {
     );
     const prod2Id = prod2[0].id;
     const grade2 = await ctx.dataSource.query<Array<{ id: string }>>(
-      `INSERT INTO grade (collection_id, code, is_system) VALUES ($1, $2, $3) RETURNING id`,
-      [collId2, 'G-K', true],
+      `INSERT INTO grade (collection_id, code, is_system, total_pieces) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [collId2, 'G-K', true, 4],
     );
     const grade2Id = grade2[0].id;
     await ctx.dataSource.query(
@@ -203,8 +203,8 @@ describe('POST /orders/:id/copy-from E2E', () => {
     );
     const prod3Id = prod3[0].id;
     const grade3 = await ctx.dataSource.query<Array<{ id: string }>>(
-      `INSERT INTO grade (collection_id, code, is_system) VALUES ($1, $2, $3) RETURNING id`,
-      [collId3, 'G-C', true],
+      `INSERT INTO grade (collection_id, code, is_system, total_pieces) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [collId3, 'G-C', true, 1],
     );
     const grade3Id = grade3[0].id;
     await ctx.dataSource.query(

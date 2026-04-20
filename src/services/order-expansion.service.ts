@@ -2,6 +2,7 @@ import type { Repository } from 'typeorm';
 import { Inject, Injectable } from '../utils/di.js';
 import { GradeSizeQty } from '../entities/grade-size-qty.entity.js';
 import type { OrderItem } from '../entities/order-item.entity.js';
+import type { OrderItemOutput } from '../modules/orders/dto/orders.dto.js';
 
 export interface ExpandedLine {
   order_item_id: string;
@@ -46,5 +47,39 @@ export class OrderExpansionService {
       }
     }
     return out;
+  }
+
+  /**
+   * Retorna mapa de grade_id → total de peças (sum de qty nas sizes).
+   * Útil para calcular expanded_qty de um item sem expandir linha por linha.
+   */
+  async gradeQtyTotals(gradeIds: string[]): Promise<Map<string, number>> {
+    if (gradeIds.length === 0) return new Map();
+    const sizes = await this.gradeSizes.find({
+      where: gradeIds.map((id) => ({ grade_id: id })),
+    });
+    const totals = new Map<string, number>();
+    for (const s of sizes) {
+      totals.set(s.grade_id, (totals.get(s.grade_id) ?? 0) + s.qty);
+    }
+    return totals;
+  }
+
+  /** Converte lista de OrderItem em OrderItemOutput[] com expanded_qty preenchido. */
+  async toOutputList(items: OrderItem[]): Promise<OrderItemOutput[]> {
+    if (items.length === 0) return [];
+    const gradeIds = [...new Set(items.map((i) => i.grade_id))];
+    const totals = await this.gradeQtyTotals(gradeIds);
+    return items.map((item) => ({
+      id: item.id,
+      product_id: item.product_id,
+      grade_id: item.grade_id,
+      multiplier: item.multiplier,
+      rdd_override_serial: item.rdd_override_serial,
+      override_forbidden: item.override_forbidden,
+      override_reason: item.override_reason,
+      expanded_qty: item.multiplier * (totals.get(item.grade_id) ?? 0),
+      updated_at: item.updated_at.toISOString(),
+    }));
   }
 }

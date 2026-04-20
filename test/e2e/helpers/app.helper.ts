@@ -12,7 +12,7 @@ import 'reflect-metadata';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import type { Express } from 'express';
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from 'testcontainers';
+import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 import { DataSource } from 'typeorm';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
@@ -30,7 +30,7 @@ import { FakeProvider } from '../../../src/decorators/fake-provider.decorator.js
 export interface TestContext {
   app: Express;
   dataSource: DataSource;
-  pgContainer: StartedPostgreSqlContainer;
+  pgContainer: StartedTestContainer;
   fakeGcs: FakeGcsProvider;
   teardown: () => Promise<void>;
   makeToken: (opts: { userId: string; tenantId: string | null; role?: 'super_admin' | 'user' }) => string;
@@ -39,18 +39,23 @@ export interface TestContext {
 }
 
 export async function buildTestApp(): Promise<TestContext> {
-  // 1. Sobe Postgres
-  const pgContainer = await new PostgreSqlContainer('postgres:16-alpine')
-    .withDatabase('pedido_test')
-    .withUsername('pedido')
-    .withPassword('pedido')
+  // 1. Sobe Postgres via GenericContainer
+  const pgContainer = await new GenericContainer('postgres:16-alpine')
+    .withEnvironment({
+      POSTGRES_DB: 'pedido_test',
+      POSTGRES_USER: 'pedido',
+      POSTGRES_PASSWORD: 'pedido',
+    })
+    .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage('database system is ready to accept connections', 2))
     .start();
 
   // 2. DataSource com migrations
+  const pgPort = pgContainer.getMappedPort(5432);
   const dataSource = new DataSource({
     type: 'postgres',
     host: pgContainer.getHost(),
-    port: pgContainer.getMappedPort(5432),
+    port: pgPort,
     username: 'pedido',
     password: 'pedido',
     database: 'pedido_test',
