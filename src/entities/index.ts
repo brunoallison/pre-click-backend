@@ -27,3 +27,4 @@ export { AiCall } from './ai-call.entity.js';
 export { AiConversation } from './ai-conversation.entity.js';
 export { AiMessage } from './ai-message.entity.js';
 export { ClusterRestrictionAlias } from './cluster-restriction-alias.entity.js';
+export { BatchHiddenProduct } from './batch-hidden-product.entity.js';

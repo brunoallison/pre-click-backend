@@ -9,6 +9,9 @@ import { DeleteBatchTask } from './tasks/delete-batch.task.js';
 import { DuplicateBatchTask } from './tasks/duplicate-batch.task.js';
 import { ExportBatchTask } from './tasks/export-batch.task.js';
 import { DownloadBatchZipTask } from './tasks/download-batch-zip.task.js';
+import { GetBatchHiddenProductsTask } from './tasks/get-batch-hidden-products.task.js';
+import { HideBatchProductTask } from './tasks/hide-batch-product.task.js';
+import { UnhideBatchProductTask } from './tasks/unhide-batch-product.task.js';
 
 export const batchesRouter = Router();
 batchesRouter.use(authMiddleware, requireTenant);
@@ -36,3 +39,12 @@ batchesRouter.post('/:id/export', ExportBatchTask.handler());
 
 // GET /batches/:id/zip — download do zip agregando arquivos da última exportação
 batchesRouter.get('/:id/zip', DownloadBatchZipTask.zipHandler());
+
+// GET /batches/:id/hidden-products — lista product_ids ocultos neste batch
+batchesRouter.get('/:id/hidden-products', GetBatchHiddenProductsTask.handler());
+
+// PUT /batches/:id/hidden-products/:productId — oculta produto no batch
+batchesRouter.put('/:id/hidden-products/:productId', HideBatchProductTask.handler());
+
+// DELETE /batches/:id/hidden-products/:productId — revela produto no batch
+batchesRouter.delete('/:id/hidden-products/:productId', UnhideBatchProductTask.handler());
