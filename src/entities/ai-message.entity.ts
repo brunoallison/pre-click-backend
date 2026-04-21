@@ -53,7 +53,11 @@ export class AiMessage {
   @Column({ type: 'jsonb', comment: 'Array de blocos de conteúdo (text, tool_use, tool_result)' })
   content!: AiContentBlock[];
 
-  @Column({ type: 'int', nullable: true, comment: 'Tokens de entrada (só mensagens de assistente)' })
+  @Column({
+    type: 'int',
+    nullable: true,
+    comment: 'Tokens de entrada (só mensagens de assistente)',
+  })
   tokens_input!: number | null;
 
   @Column({ type: 'int', nullable: true, comment: 'Tokens de saída (só mensagens de assistente)' })

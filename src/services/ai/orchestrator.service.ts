@@ -242,7 +242,10 @@ export class OrchestratorService {
           system,
         );
       } catch (err) {
-        logger.error({ err, conversationId: conv.id }, 'OrchestratorService: falha na API Anthropic');
+        logger.error(
+          { err, conversationId: conv.id },
+          'OrchestratorService: falha na API Anthropic',
+        );
         const errMsg =
           'Desculpe, o assistente está indisponível no momento. Tente novamente em instantes.';
         await this.conversationService.addMessage(conv.id, {

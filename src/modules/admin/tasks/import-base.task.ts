@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type { DataSource, EntityManager } from 'typeorm';
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
 import { Collection } from '../../../entities/collection.entity.js';
 import { ImportBase } from '../../../entities/import-base.entity.js';
 import { Product } from '../../../entities/product.entity.js';
@@ -301,7 +302,7 @@ export class ImportBaseTask extends Task<ImportBaseOutput> {
 
       let productId: string;
       if (existing) {
-        await productRepo.update({ id: existing.id }, payload);
+        await productRepo.update({ id: existing.id }, payload as QueryDeepPartialEntity<Product>);
         productId = existing.id;
         if (!productIdSet.has(productId)) products_updated += 1;
       } else {

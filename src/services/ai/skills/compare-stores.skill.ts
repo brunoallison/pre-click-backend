@@ -15,7 +15,9 @@ interface StoreComparison {
   exclusive_to_b: number;
 }
 
-export function buildCompareStoresSkill(dataSource: DataSource): Skill<CompareStoresInput, StoreComparison | { error: string }> {
+export function buildCompareStoresSkill(
+  dataSource: DataSource,
+): Skill<CompareStoresInput, StoreComparison | { error: string }> {
   return {
     name: 'compare_stores',
     description:
@@ -30,7 +32,10 @@ export function buildCompareStoresSkill(dataSource: DataSource): Skill<CompareSt
         collection_id: { type: 'string', description: 'ID da coleção (opcional)' },
       },
     },
-    async handler(ctx: SkillContext, input: CompareStoresInput): Promise<StoreComparison | { error: string }> {
+    async handler(
+      ctx: SkillContext,
+      input: CompareStoresInput,
+    ): Promise<StoreComparison | { error: string }> {
       const qr = dataSource.createQueryRunner();
       try {
         await qr.connect();
@@ -39,11 +44,12 @@ export function buildCompareStoresSkill(dataSource: DataSource): Skill<CompareSt
           ? `AND o.collection_id = '${input.collection_id}'`
           : '';
 
-        const getStoreAgg = async (storeId: string): Promise<{ display_name: string; total_pcs: number; total_rrp: number }> => {
-          const nameRows = await qr.manager.query<Array<{ display_name: string; tenant_id: string }>>(
-            `SELECT display_name, tenant_id FROM store WHERE id = $1`,
-            [storeId],
-          );
+        const getStoreAgg = async (
+          storeId: string,
+        ): Promise<{ display_name: string; total_pcs: number; total_rrp: number }> => {
+          const nameRows = await qr.manager.query<
+            Array<{ display_name: string; tenant_id: string }>
+          >(`SELECT display_name, tenant_id FROM store WHERE id = $1`, [storeId]);
           if (!nameRows.length || nameRows[0]!.tenant_id !== ctx.tenantId) {
             return { display_name: 'Loja não encontrada', total_pcs: 0, total_rrp: 0 };
           }

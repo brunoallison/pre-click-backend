@@ -89,9 +89,7 @@ export class CreateAiConversations1778000000000 implements MigrationInterface {
     await queryRunner.query(
       `COMMENT ON COLUMN "ai_message"."user_id" IS 'FK user — NULL para mensagens de assistente/tool'`,
     );
-    await queryRunner.query(
-      `COMMENT ON COLUMN "ai_message"."role" IS 'user | assistant | tool'`,
-    );
+    await queryRunner.query(`COMMENT ON COLUMN "ai_message"."role" IS 'user | assistant | tool'`);
     await queryRunner.query(
       `COMMENT ON COLUMN "ai_message"."content" IS 'Array de blocos de conteúdo (text, tool_use, tool_result)'`,
     );

@@ -163,7 +163,10 @@ export class ListProductsTask extends Task<ListOut> {
       const cluster_availabilities: Record<string, ClusterAvailabilityDto> = {};
       if (byCluster) {
         for (const [cl, a] of byCluster) {
-          cluster_availabilities[cl] = { availability: a.availability, restriction_scope: a.restriction_scope };
+          cluster_availabilities[cl] = {
+            availability: a.availability,
+            restriction_scope: a.restriction_scope,
+          };
         }
       }
 
@@ -206,7 +209,9 @@ export class ListProductsTask extends Task<ListOut> {
         items = items.filter((p) => p.cluster_availabilities[cluster]?.availability === 'required');
       }
       if (query.hide_forbidden === true || query.hide_forbidden === 'true') {
-        items = items.filter((p) => p.cluster_availabilities[cluster]?.availability !== 'forbidden');
+        items = items.filter(
+          (p) => p.cluster_availabilities[cluster]?.availability !== 'forbidden',
+        );
       }
     }
 

@@ -17,7 +17,9 @@ interface StoreStatus {
   budget_used_pct: number | null;
 }
 
-export function buildGetStoreStatusSkill(dataSource: DataSource): Skill<GetStoreStatusInput, StoreStatus | { error: string }> {
+export function buildGetStoreStatusSkill(
+  dataSource: DataSource,
+): Skill<GetStoreStatusInput, StoreStatus | { error: string }> {
   return {
     name: 'get_store_status',
     description:
@@ -31,17 +33,17 @@ export function buildGetStoreStatusSkill(dataSource: DataSource): Skill<GetStore
         collection_id: { type: 'string', description: 'ID da coleção (opcional)' },
       },
     },
-    async handler(ctx: SkillContext, input: GetStoreStatusInput): Promise<StoreStatus | { error: string }> {
+    async handler(
+      ctx: SkillContext,
+      input: GetStoreStatusInput,
+    ): Promise<StoreStatus | { error: string }> {
       const qr = dataSource.createQueryRunner();
       try {
         await qr.connect();
 
         const storeRows = await qr.manager.query<
           Array<{ id: string; display_name: string; cluster: string | null; tenant_id: string }>
-        >(
-          `SELECT id, display_name, cluster, tenant_id FROM store WHERE id = $1`,
-          [input.store_id],
-        );
+        >(`SELECT id, display_name, cluster, tenant_id FROM store WHERE id = $1`, [input.store_id]);
 
         if (!storeRows.length || storeRows[0]!.tenant_id !== ctx.tenantId) {
           return { error: 'Loja não encontrada' };

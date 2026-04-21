@@ -21,7 +21,9 @@ interface FindSkuOutput {
   total: number;
 }
 
-export function buildFindSkuSkill(products: Repository<Product>): Skill<FindSkuInput, FindSkuOutput> {
+export function buildFindSkuSkill(
+  products: Repository<Product>,
+): Skill<FindSkuInput, FindSkuOutput> {
   return {
     name: 'find_sku',
     description:
