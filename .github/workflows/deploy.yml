@@ -103,8 +103,8 @@ jobs:
             --image gcr.io/datadoghq/serverless-init:1.8.2 \
             --memory 512Mi \
             --cpu 0.5 \
+            --set-secrets "DD_API_KEY=DD_API_KEY:latest" \
             --set-env-vars "\
-              DD_API_KEY=${{ secrets.DD_API_KEY }},\
               DD_SITE=${{ vars.DD_SITE }},\
               DD_SERVICE=${{ env.SERVICE_NAME }},\
               DD_VERSION=${{ github.sha }},\
@@ -148,7 +148,7 @@ jobs:
             template:
               metadata:
                 annotations:
-                  autoscaling.knative.dev/minScale: "0"
+                  autoscaling.knative.dev/minScale: "1"
                   autoscaling.knative.dev/maxScale: "5"
                   run.googleapis.com/cpu-throttling: "false"
                   run.googleapis.com/container-dependencies: '{"${{ env.SERVICE_NAME }}":["datadog-agent"]}'
@@ -234,7 +234,10 @@ jobs:
                   - name: DD_SITE
                     value: "${{ vars.DD_SITE }}"
                   - name: DD_API_KEY
-                    value: "${{ secrets.DD_API_KEY }}"
+                    valueFrom:
+                      secretKeyRef:
+                        key: latest
+                        name: DD_API_KEY
                   startupProbe:
                     tcpSocket:
                       port: 8080
@@ -254,7 +257,10 @@ jobs:
                     mountPath: /opt/datadog-agent/run
                   env:
                   - name: DD_API_KEY
-                    value: "${{ secrets.DD_API_KEY }}"
+                    valueFrom:
+                      secretKeyRef:
+                        key: latest
+                        name: DD_API_KEY
                   - name: DD_SITE
                     value: "${{ vars.DD_SITE }}"
                   - name: DD_SERVICE
