@@ -155,8 +155,8 @@ jobs:
               metadata:
                 annotations:
                   autoscaling.knative.dev/minScale: "0"
-                  autoscaling.knative.dev/maxScale: "10"
-                  run.googleapis.com/cpu-throttling: "true"
+                  autoscaling.knative.dev/maxScale: "5"
+                  run.googleapis.com/cpu-throttling: "false"
                   run.googleapis.com/container-dependencies: '{"${{ env.SERVICE_NAME }}":["datadog-agent","cloud-sql-proxy"]}'
               spec:
                 timeoutSeconds: 300
