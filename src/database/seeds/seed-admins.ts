@@ -7,7 +7,6 @@ import { logger } from '../../utils/logger.js';
 const ADMINS = [
   { email: 'bruno.allison@live.com', display_name: 'Bruno Allison' },
   { email: 'biatatibana@gmail.com', display_name: 'Bia Tatibana' },
-  { email: 'andressa@gruponomura.com.br', display_name: 'Andressa Nomura' },
   { email: 'andressa.raposo1@gmail.com', display_name: 'Andressa Raposo' },
 ];
 
