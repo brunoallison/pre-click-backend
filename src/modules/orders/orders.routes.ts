@@ -11,6 +11,7 @@ import { DeleteOrderItemTask } from './tasks/delete-order-item.task.js';
 import { GetOrderSummaryTask } from './tasks/get-order-summary.task.js';
 import { CopyOrderItemsTask } from './tasks/copy-order-items.task.js';
 import { CreateExportTask } from '../exports/tasks/create-export.task.js';
+import { GetOrderInsightsTask } from '../insights/tasks/get-order-insights.task.js';
 
 export const ordersRouter = Router();
 ordersRouter.use(authMiddleware, requireTenant);
@@ -29,6 +30,9 @@ ordersRouter.patch('/:id', UpdateOrderStatusTask.handler());
 
 // GET /orders/:id/summary — totais do pedido
 ordersRouter.get('/:id/summary', GetOrderSummaryTask.handler());
+
+// GET /orders/:id/insights — insights determinísticos do pedido
+ordersRouter.get('/:id/insights', GetOrderInsightsTask.handler());
 
 // POST /orders/:id/copy-from — copia itens de outra loja
 ordersRouter.post('/:id/copy-from', CopyOrderItemsTask.handler());

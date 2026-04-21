@@ -66,9 +66,9 @@ export class GetKpisTask extends Task<DashboardKpisOutput> {
       },
     });
 
-    // Deltas vs coleção anterior (opcional)
-    let deltaPieces: number | null = null;
-    let deltaRrp: number | null = null;
+    // Deltas vs coleção anterior (opcional): variação percentual ((curr - prev) / prev) * 100
+    let deltaPiecesPct: number | null = null;
+    let deltaRrpPct: number | null = null;
 
     if (prev_collection_id) {
       const prevOrders = await this.orders.find({
@@ -92,18 +92,25 @@ export class GetKpisTask extends Task<DashboardKpisOutput> {
 
         const prevPieces = Number(prevResult?.total_pieces ?? 0);
         const prevRrp = Number(prevResult?.total_rrp ?? 0);
-        deltaPieces = totalPieces - prevPieces;
-        deltaRrp = Math.round((totalRrp - prevRrp) * 100) / 100;
+        if (prevPieces > 0) {
+          deltaPiecesPct = Math.round(((totalPieces - prevPieces) / prevPieces) * 10000) / 100;
+        }
+        if (prevRrp > 0) {
+          deltaRrpPct = Math.round(((totalRrp - prevRrp) / prevRrp) * 10000) / 100;
+        }
       }
     }
 
     return {
-      total_pieces: totalPieces,
-      total_rrp: Math.round(totalRrp * 100) / 100,
+      total_pieces: { value: totalPieces, delta_pct_vs_previous: deltaPiecesPct },
+      total_rrp_brl: {
+        value: Math.round(totalRrp * 100) / 100,
+        delta_pct_vs_previous: deltaRrpPct,
+      },
       missing_orders_count: missingOrdersCount,
       ai_suggestions_count: aiSuggestionsCount,
-      delta_pieces: deltaPieces,
-      delta_rrp: deltaRrp,
+      // ai_call não persiste confidence ainda — requer nova coluna para computar
+      ai_avg_confidence_pct: null,
     };
   }
 }

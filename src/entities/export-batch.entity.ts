@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Order } from './order.entity.js';
+import { OrderBatch } from './order-batch.entity.js';
 import { Tenant } from './tenant.entity.js';
 import { User } from './user.entity.js';
 
@@ -15,6 +16,7 @@ export type ExportStrategy = 'by_rdd' | 'by_size' | 'manual';
 
 @Entity({ name: 'export_batch', comment: 'Batch de exportação de um pedido para o Click.' })
 @Index('export_batch_tenant_order', ['tenant_id', 'order_id'])
+@Index('export_batch_order_batch', ['order_batch_id'])
 export class ExportBatch {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -32,6 +34,17 @@ export class ExportBatch {
   @ManyToOne(() => Order, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order?: Order;
+
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    comment: 'FK order_batch (pedido nomeado agrupador) — null permitido para batches legados',
+  })
+  order_batch_id!: string | null;
+
+  @ManyToOne(() => OrderBatch, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'order_batch_id' })
+  order_batch?: OrderBatch | null;
 
   @Column({ type: 'uuid', nullable: true, comment: 'Batch pai (re-export de erro)' })
   parent_batch_id!: string | null;

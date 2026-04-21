@@ -43,6 +43,9 @@ export abstract class Task<TOutput> {
 
   public static handler<T extends Task<unknown>>(
     this: new (...args: never[]) => T,
+    options?: {
+      onResponse?: (result: unknown, req: Request, res: Response) => unknown | Promise<unknown>;
+    },
   ): RequestHandler {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Ctor = this as any;
@@ -54,10 +57,12 @@ export abstract class Task<TOutput> {
         }
         const result = await task.execute(task['buildInput'](req));
         if (result === undefined || result === null) {
+          if (options?.onResponse) await options.onResponse(result, req, res);
           res.status(204).end();
           return;
         }
-        res.json(result);
+        const final = options?.onResponse ? await options.onResponse(result, req, res) : result;
+        res.json(final);
       } catch (err) {
         next(err);
       }

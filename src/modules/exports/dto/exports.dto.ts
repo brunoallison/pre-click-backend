@@ -10,6 +10,10 @@ export class CreateExportInput {
   @IsOptional()
   @IsBoolean()
   dry_run?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  order_batch_id?: string;
 }
 
 export class ListExportsInput {
@@ -24,16 +28,18 @@ export interface ExportBatchFileOutput {
   file_name: string;
   gcs_key: string;
   row_count: number;
-  rdd: number | null;
+  rdd_serial: number | null;
   store_id: string | null;
   status: string;
   downloaded_at: string | null;
   sent_at: string | null;
+  download_url: string;
 }
 
 export interface ExportBatchOutput {
   id: string;
   order_id: string;
+  order_batch_id: string | null;
   tenant_id: string;
   strategy: string;
   total_rows: number;

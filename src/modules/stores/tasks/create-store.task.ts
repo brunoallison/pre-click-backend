@@ -45,6 +45,8 @@ export class CreateStoreTask extends Task<StoreOutput> {
       status_comp: saved.status_comp,
       is_dummy: saved.is_dummy,
       is_active: saved.is_active,
+      budget: null,
+      total_pieces: 0,
     };
   }
 }

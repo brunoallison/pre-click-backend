@@ -36,6 +36,7 @@ export class ListExportsTask extends Task<ExportBatchOutput[]> {
     return batches.map((b) => ({
       id: b.id,
       order_id: b.order_id,
+      order_batch_id: b.order_batch_id,
       tenant_id: b.tenant_id,
       strategy: b.strategy,
       total_rows: b.total_rows,

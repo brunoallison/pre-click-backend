@@ -11,10 +11,10 @@ import { Inject, Injectable } from '../../../utils/di.js';
 import { toSafeUser } from '../../../utils/safe-user.js';
 import { Task, type BaseInput } from '../../../utils/task.js';
 import { verifyBody } from '../../../utils/schema.js';
-import { LoginInput, type LoginOutput } from '../dto/login.dto.js';
+import { LoginInput, type LoginInternalOutput } from '../dto/login.dto.js';
 
 @Injectable()
-export class LoginTask extends Task<LoginOutput> {
+export class LoginTask extends Task<LoginInternalOutput> {
   protected validations = [verifyBody(LoginInput, true)];
 
   constructor(
@@ -25,7 +25,7 @@ export class LoginTask extends Task<LoginOutput> {
     super();
   }
 
-  async execute(input: BaseInput): Promise<LoginOutput> {
+  async execute(input: BaseInput): Promise<LoginInternalOutput> {
     const { email, password } = input.body as LoginInput;
     const user = await this.users.findOne({ where: { email: email.toLowerCase() } });
     if (!user || !user.is_active) {
@@ -50,7 +50,7 @@ export class LoginTask extends Task<LoginOutput> {
     user.last_login_at = new Date();
     await this.users.save(user);
 
-    let tenantOut: LoginOutput['tenant'] = null;
+    let tenantOut: LoginInternalOutput['tenant'] = null;
     if (user.tenant_id) {
       const tenant = await this.tenants.findOne({ where: { id: user.tenant_id } });
       if (tenant) {
@@ -58,6 +58,11 @@ export class LoginTask extends Task<LoginOutput> {
       }
     }
 
-    return { access_token: accessToken, user: toSafeUser(user), tenant: tenantOut };
+    return {
+      access_token: accessToken,
+      user: toSafeUser(user),
+      tenant: tenantOut,
+      refresh_jti: jti,
+    };
   }
 }

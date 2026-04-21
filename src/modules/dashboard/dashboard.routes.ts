@@ -4,6 +4,7 @@ import { requireTenant } from '../../middlewares/require-tenant.middleware.js';
 import { GetSummaryTask } from './tasks/get-summary.task.js';
 import { GetSharesTask } from './tasks/get-shares.task.js';
 import { GetKpisTask } from './tasks/get-kpis.task.js';
+import { GetDashboardInsightsTask } from '../insights/tasks/get-dashboard-insights.task.js';
 
 export const dashboardRouter = Router();
 dashboardRouter.use(authMiddleware, requireTenant);
@@ -17,4 +18,5 @@ dashboardRouter.get('/shares', GetSharesTask.handler());
 // GET /dashboard/kpis?collection_id=&prev_collection_id= — KPIs com deltas
 dashboardRouter.get('/kpis', GetKpisTask.handler());
 
-// TODO: GET /insights — insights agregados da coleção (cross-pedido)
+// GET /dashboard/insights?collection_id= — insights agregados da coleção
+dashboardRouter.get('/insights', GetDashboardInsightsTask.handler());

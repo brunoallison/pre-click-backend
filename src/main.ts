@@ -11,6 +11,7 @@ import { requestLogger } from './middlewares/request-logger.middleware.js';
 import { adminRouter } from './modules/admin/admin.routes.js';
 import { aiRouter } from './modules/ai/ai.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { batchesRouter } from './modules/batches/batches.routes.js';
 import { catalogRouter } from './modules/catalog/catalog.routes.js';
 import { clickErrorsRouter } from './modules/click-errors/click-errors.routes.js';
 import { collectionsRouter } from './modules/collections/collections.routes.js';
@@ -50,6 +51,7 @@ async function bootstrap(): Promise<void> {
   v1.use('/stores', storesRouter);
   v1.use('/collections', collectionsRouter);
   v1.use('/catalog', catalogRouter);
+  v1.use('/batches', batchesRouter);
   v1.use('/orders', ordersRouter);
   v1.use('/exports', exportsRouter);
   v1.use('/click-errors', clickErrorsRouter);

@@ -15,5 +15,3 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: migrationEnv.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
 });
-
-export default AppDataSource;

@@ -28,6 +28,7 @@ export class ListOrdersTask extends Task<Paginated<OrderOutput>> {
       .take(pageSize);
 
     if (q.collection_id) qb.andWhere('o.collection_id = :cid', { cid: q.collection_id });
+    if (q.batch_id) qb.andWhere('o.batch_id = :bid', { bid: q.batch_id });
     if (q.store_id) qb.andWhere('o.store_id = :sid', { sid: q.store_id });
     if (q.status) qb.andWhere('o.status = :status', { status: q.status });
 
@@ -37,6 +38,7 @@ export class ListOrdersTask extends Task<Paginated<OrderOutput>> {
       id: o.id,
       store_id: o.store_id,
       collection_id: o.collection_id,
+      batch_id: o.batch_id,
       status: o.status,
       items: [],
       totals: { pieces: 0, rrp_brl: 0, skus_distinct: 0 },

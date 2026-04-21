@@ -67,6 +67,10 @@ export class UpsertOrderItemTask extends Task<OrderItemOutput> {
     }
     const saved = await this.items.save(entity);
 
+    // Toca updated_at do pedido pai — mutações de item devem bumpar o parent,
+    // senão listOrders (ordenado por updated_at DESC) fica defasado.
+    await this.orders.update({ id: orderId }, { updated_at: new Date() });
+
     // Calcula expanded_qty real via join com grade_size_qty
     const gradeTotals = await this.expansion.gradeQtyTotals([saved.grade_id]);
     const gradeQty = gradeTotals.get(saved.grade_id) ?? 0;

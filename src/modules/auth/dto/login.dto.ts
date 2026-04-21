@@ -16,6 +16,12 @@ export interface LoginOutput {
   tenant: { id: string; slug: string; display_name: string } | null;
 }
 
+// Shape interno devolvido pelo LoginTask — o jti vira cookie httpOnly
+// e é removido do body antes do res.json().
+export interface LoginInternalOutput extends LoginOutput {
+  refresh_jti: string;
+}
+
 export interface MeOutput {
   user: SafeUser;
   tenant: { id: string; slug: string; display_name: string } | null;

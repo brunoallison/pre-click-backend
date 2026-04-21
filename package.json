@@ -15,7 +15,7 @@
     "lint": "eslint \"src/**/*.ts\" --max-warnings=0",
     "test:unit": "vitest run --dir src --exclude '**/*.e2e.test.ts'",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
-    "typeorm": "typeorm-ts-node-esm -d src/database/data-source.ts",
+    "typeorm": "tsx ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",

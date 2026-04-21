@@ -37,6 +37,7 @@ export class UpdateOrderStatusTask extends Task<OrderOutput> {
       id: saved.id,
       store_id: saved.store_id,
       collection_id: saved.collection_id,
+      batch_id: saved.batch_id,
       status: saved.status,
       items: [],
       totals: { pieces: 0, rrp_brl: 0, skus_distinct: 0 },

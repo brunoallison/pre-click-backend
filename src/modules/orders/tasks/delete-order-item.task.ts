@@ -29,6 +29,8 @@ export class DeleteOrderItemTask extends Task<null> {
     if (!item) throw HttpError.NotFound('not_found', 'Item não encontrado');
 
     await this.items.delete({ id: itemId });
+    // Toca updated_at do pedido pai — coerente com upsert-order-item.
+    await this.orders.update({ id }, { updated_at: new Date() });
     return null;
   }
 }

@@ -37,6 +37,7 @@ export class GetOrderTask extends Task<OrderOutput> {
       id: order.id,
       store_id: order.store_id,
       collection_id: order.collection_id,
+      batch_id: order.batch_id,
       status: order.status,
       items: itemOutputs,
       totals: { pieces, rrp_brl: 0, skus_distinct: skusDistinct },

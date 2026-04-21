@@ -3,11 +3,6 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { buildTestApp, type TestContext } from './helpers/app.helper.js';
 
-interface OrderBody {
-  id: string;
-  status: string;
-}
-
 interface CopyResult {
   copied: number;
   skipped_forbidden: number;
@@ -20,6 +15,7 @@ describe('POST /orders/:id/copy-from E2E', () => {
   let server: http.Server;
   let baseUrl: string;
   let tenantId: string;
+  let userId: string;
   let token: string;
   let storeIdA: string;
   let storeIdB: string;
@@ -37,6 +33,7 @@ describe('POST /orders/:id/copy-from E2E', () => {
     const tenant = await ctx.seedTenant();
     tenantId = tenant.id;
     const user = await ctx.seedUser({ tenantId, role: 'user' });
+    userId = user.id;
     token = ctx.makeToken({ userId: user.id, tenantId, role: 'user' });
 
     // Duas lojas
@@ -87,13 +84,17 @@ describe('POST /orders/:id/copy-from E2E', () => {
     await ctx.teardown();
   });
 
-  async function createOrder(sid: string): Promise<string> {
-    const res = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collectionId, store_id: sid }),
+  async function createOrders(
+    collId: string,
+    storeIds: string[],
+  ): Promise<Map<string, string>> {
+    const batch = await ctx.seedBatch({
+      tenantId,
+      collectionId: collId,
+      userId,
+      storeIds,
     });
-    return ((await res.json()) as OrderBody).id;
+    return batch.orderByStore;
   }
 
   async function addItem(orderId: string, multiplier: number): Promise<void> {
@@ -105,8 +106,9 @@ describe('POST /orders/:id/copy-from E2E', () => {
   }
 
   it('policy overwrite: copia item e sobrescreve destino', async () => {
-    const srcId = await createOrder(storeIdA);
-    const destId = await createOrder(storeIdB);
+    const map = await createOrders(collectionId, [storeIdA, storeIdB]);
+    const srcId = map.get(storeIdA)!;
+    const destId = map.get(storeIdB)!;
     await addItem(srcId, 5);
     await addItem(destId, 2);
 
@@ -150,20 +152,9 @@ describe('POST /orders/:id/copy-from E2E', () => {
       [grade2Id, 'M', 4],
     );
 
-    // Cria pedidos nas lojas para essa coleção
-    const srcRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collId2, store_id: storeIdA }),
-    });
-    const srcId = ((await srcRes.json()) as OrderBody).id;
-
-    const destRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collId2, store_id: storeIdB }),
-    });
-    const destId = ((await destRes.json()) as OrderBody).id;
+    const map2 = await createOrders(collId2, [storeIdA, storeIdB]);
+    const srcId = map2.get(storeIdA)!;
+    const destId = map2.get(storeIdB)!;
 
     // Adiciona item com mult=4 em src e mult=7 em dest para o mesmo produto
     await fetch(`${baseUrl}/orders/${srcId}/items`, {
@@ -212,19 +203,9 @@ describe('POST /orders/:id/copy-from E2E', () => {
       [grade3Id, 'OS', 1],
     );
 
-    const srcRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collId3, store_id: storeIdA }),
-    });
-    const srcId = ((await srcRes.json()) as OrderBody).id;
-
-    const destRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collId3, store_id: storeIdB }),
-    });
-    const destId = ((await destRes.json()) as OrderBody).id;
+    const map3 = await createOrders(collId3, [storeIdA, storeIdB]);
+    const srcId = map3.get(storeIdA)!;
+    const destId = map3.get(storeIdB)!;
 
     await fetch(`${baseUrl}/orders/${srcId}/items`, {
       method: 'POST',

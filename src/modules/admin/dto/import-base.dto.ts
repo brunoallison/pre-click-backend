@@ -13,5 +13,9 @@ export class ImportBaseInput {
 export interface ImportBaseOutput {
   import_id: string;
   job_id: string;
-  status: 'queued';
+  status: 'completed' | 'failed';
+  rows_new: number;
+  rows_updated: number;
+  stores_new: number;
+  stores_updated: number;
 }

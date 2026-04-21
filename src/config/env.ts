@@ -1,6 +1,11 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
+// z.coerce.boolean() usa Boolean(v) — "false" vira true. Este parser trata strings "true"/"false"/"1"/"0".
+const boolFromEnv = z
+  .union([z.boolean(), z.string()])
+  .transform((v) => (typeof v === 'boolean' ? v : ['true', '1', 'yes'].includes(v.toLowerCase())));
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -18,7 +23,7 @@ const envSchema = z.object({
   REDIS_HOST: z.string().min(1),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
   REDIS_PASSWORD: z.string().optional(),
-  REDIS_TLS: z.coerce.boolean().default(false),
+  REDIS_TLS: boolFromEnv.default(false),
 
   // Auth
   JWT_SECRET: z.string().min(16),
@@ -29,7 +34,7 @@ const envSchema = z.object({
     .positive()
     .default(60 * 60 * 24 * 7),
   COOKIE_DOMAIN: z.string().min(1).default('localhost'),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: boolFromEnv.default(false),
 
   // Google Cloud Storage (ADC — sem keyfile)
   GCS_BUCKET_NAME: z.string().min(1),
@@ -48,7 +53,7 @@ const envSchema = z.object({
   DD_VERSION: z.string().optional(),
   DD_AGENT_HOST: z.string().optional(),
   DD_TRACE_AGENT_URL: z.string().optional(),
-  DD_LOGS_INJECTION: z.coerce.boolean().default(false),
+  DD_LOGS_INJECTION: boolFromEnv.default(false),
   DD_API_KEY: z.string().optional(),
   DD_SITE: z.string().optional(),
 

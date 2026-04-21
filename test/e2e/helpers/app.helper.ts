@@ -19,10 +19,15 @@ import jwt from 'jsonwebtoken';
 import * as entities from '../../../src/entities/index.js';
 import { registerRepositories, container } from '../../../src/utils/di.js';
 import { errorHandler } from '../../../src/middlewares/error-handler.middleware.js';
+import { adminRouter } from '../../../src/modules/admin/admin.routes.js';
 import { authRouter } from '../../../src/modules/auth/auth.routes.js';
+import { batchesRouter } from '../../../src/modules/batches/batches.routes.js';
+import { catalogRouter } from '../../../src/modules/catalog/catalog.routes.js';
 import { ordersRouter } from '../../../src/modules/orders/orders.routes.js';
 import { exportsRouter } from '../../../src/modules/exports/exports.routes.js';
 import { healthRouter } from '../../../src/modules/health/health.routes.js';
+import { storesRouter } from '../../../src/modules/stores/stores.routes.js';
+import { dashboardRouter } from '../../../src/modules/dashboard/dashboard.routes.js';
 import { GcsProvider } from '../../../src/providers/gcs/gcs.provider.js';
 import { FakeGcsProvider } from '../../../src/providers/gcs/__fakes__/fake-gcs.provider.js';
 import { FakeProvider } from '../../../src/decorators/fake-provider.decorator.js';
@@ -30,6 +35,7 @@ import { OrderExpansionService } from '../../../src/services/order-expansion.ser
 import { ExportBuilderService } from '../../../src/services/export-builder.service.js';
 import { OrderValidationService } from '../../../src/services/order-validation.service.js';
 import { ClickWriterProvider } from '../../../src/providers/excel/click-writer.provider.js';
+import { InsightsService } from '../../../src/services/insights.service.js';
 
 export interface TestContext {
   app: Express;
@@ -40,6 +46,13 @@ export interface TestContext {
   makeToken: (opts: { userId: string; tenantId: string | null; role?: 'super_admin' | 'user' }) => string;
   seedUser: (opts: { tenantId?: string | null; role?: 'super_admin' | 'user'; email?: string }) => Promise<{ id: string; email: string }>;
   seedTenant: () => Promise<{ id: string; slug: string }>;
+  seedBatch: (opts: {
+    tenantId: string;
+    collectionId: string;
+    userId: string;
+    name?: string;
+    storeIds?: string[];
+  }) => Promise<{ id: string; orderIds: string[]; orderByStore: Map<string, string> }>;
 }
 
 export async function buildTestApp(): Promise<TestContext> {
@@ -102,16 +115,29 @@ export async function buildTestApp(): Promise<TestContext> {
   const clickWriter = new ClickWriterProvider();
   container.register(ClickWriterProvider, { useValue: clickWriter });
 
+  const insightsService = new InsightsService(
+    dataSource.getRepository(entities.Order),
+    dataSource.getRepository(entities.OrderItem),
+    dataSource.getRepository(entities.Store),
+    dataSource.getRepository(entities.StoreBudget),
+  );
+  container.register(InsightsService, { useValue: insightsService });
+
   // 5. Monta Express
   const app = express();
   app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
 
   const v1 = express.Router();
+  v1.use('/admin', adminRouter);
   v1.use('/auth', authRouter);
+  v1.use('/batches', batchesRouter);
+  v1.use('/catalog', catalogRouter);
   v1.use('/orders', ordersRouter);
   v1.use('/exports', exportsRouter);
   v1.use('/health', healthRouter);
+  v1.use('/stores', storesRouter);
+  v1.use('/dashboard', dashboardRouter);
   app.use('/api/v1', v1);
   app.use(errorHandler);
 
@@ -149,10 +175,51 @@ export async function buildTestApp(): Promise<TestContext> {
     return result[0];
   }
 
+  async function seedBatch(opts: {
+    tenantId: string;
+    collectionId: string;
+    userId: string;
+    name?: string;
+    storeIds?: string[];
+  }): Promise<{ id: string; orderIds: string[]; orderByStore: Map<string, string> }> {
+    const name = opts.name ?? `batch-${Date.now()}`;
+    const batchRow = await dataSource.query<Array<{ id: string }>>(
+      `INSERT INTO order_batch (tenant_id, collection_id, name, status, export_count, created_by)
+       VALUES ($1, $2, $3, 'draft', 0, $4)
+       RETURNING id`,
+      [opts.tenantId, opts.collectionId, name, opts.userId],
+    );
+    const batchId = batchRow[0].id;
+
+    const orderByStore = new Map<string, string>();
+    const orderIds: string[] = [];
+    for (const storeId of opts.storeIds ?? []) {
+      const orderRow = await dataSource.query<Array<{ id: string }>>(
+        `INSERT INTO "order" (tenant_id, collection_id, batch_id, store_id, status, created_by)
+         VALUES ($1, $2, $3, $4, 'draft', $5)
+         RETURNING id`,
+        [opts.tenantId, opts.collectionId, batchId, storeId, opts.userId],
+      );
+      orderByStore.set(storeId, orderRow[0].id);
+      orderIds.push(orderRow[0].id);
+    }
+    return { id: batchId, orderIds, orderByStore };
+  }
+
   const teardown = async () => {
     await dataSource.destroy();
     await pgContainer.stop();
   };
 
-  return { app, dataSource, pgContainer, fakeGcs, teardown, makeToken, seedUser, seedTenant };
+  return {
+    app,
+    dataSource,
+    pgContainer,
+    fakeGcs,
+    teardown,
+    makeToken,
+    seedUser,
+    seedTenant,
+    seedBatch,
+  };
 }

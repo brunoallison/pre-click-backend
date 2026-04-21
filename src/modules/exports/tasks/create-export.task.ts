@@ -71,7 +71,7 @@ export class CreateExportTask extends Task<CreateExportOutput> {
     if (!store.customer_id_sap) {
       throw HttpError.Unprocessable(
         'missing_customer_id',
-        `Loja "${store.legal_name}" não tem Customer ID cadastrado — não é possível exportar`,
+        `Loja "${store.display_name}" (${store.legal_name}) não tem Customer ID SAP cadastrado. Acesse "Lojas" na sidebar, clique no card da loja e preencha o campo CUSTOMER (SAP) — número fornecido pela Adidas ao cadastrar a loja no Click.`,
       );
     }
 
@@ -184,6 +184,7 @@ export class CreateExportTask extends Task<CreateExportOutput> {
     const batch = this.batches.create({
       tenant_id: tenantId,
       order_id: orderId,
+      order_batch_id: dto.order_batch_id ?? order.batch_id ?? null,
       parent_batch_id: null,
       strategy: dto.strategy,
       chunk_size_limit: 400,
@@ -240,27 +241,33 @@ export class CreateExportTask extends Task<CreateExportOutput> {
       'export-builder: batch gerado com sucesso',
     );
 
+    const filesWithUrls = await Promise.all(
+      savedFiles.map(async (f) => ({
+        id: f.id,
+        sequence: f.sequence,
+        file_name: f.file_name,
+        gcs_key: f.gcs_key,
+        row_count: f.row_count,
+        rdd_serial: f.rdd,
+        store_id: f.store_id,
+        status: f.status,
+        downloaded_at: null,
+        sent_at: null,
+        download_url: await this.gcs.getSignedUrl(f.gcs_key, 3600),
+      })),
+    );
+
     return {
       id: savedBatch.id,
       order_id: savedBatch.order_id,
+      order_batch_id: savedBatch.order_batch_id,
       tenant_id: savedBatch.tenant_id,
       strategy: savedBatch.strategy,
       total_rows: savedBatch.total_rows,
       total_files: savedBatch.total_files,
       triggered_by: savedBatch.triggered_by,
       created_at: savedBatch.created_at.toISOString(),
-      files: savedFiles.map((f) => ({
-        id: f.id,
-        sequence: f.sequence,
-        file_name: f.file_name,
-        gcs_key: f.gcs_key,
-        row_count: f.row_count,
-        rdd: f.rdd,
-        store_id: f.store_id,
-        status: f.status,
-        downloaded_at: null,
-        sent_at: null,
-      })),
+      files: filesWithUrls,
     } satisfies ExportBatchOutput;
   }
 }

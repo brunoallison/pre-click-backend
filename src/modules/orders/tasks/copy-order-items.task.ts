@@ -104,6 +104,10 @@ export class CopyOrderItemsTask extends Task<CopyOrderOutput> {
       }
     }
 
+    if (copied > 0) {
+      await this.orders.update({ id }, { updated_at: new Date() });
+    }
+
     return {
       copied,
       skipped_forbidden: skippedForbidden,

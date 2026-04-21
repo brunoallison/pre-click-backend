@@ -9,14 +9,18 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Collection } from './collection.entity.js';
+import { OrderBatch } from './order-batch.entity.js';
 import { Store } from './store.entity.js';
 import { Tenant } from './tenant.entity.js';
 import { User } from './user.entity.js';
 
 export type OrderStatus = 'draft' | 'submitted' | 'exported' | 'partial' | 'closed';
 
-@Entity({ name: 'order', comment: 'Pedido de 1 loja × 1 coleção.' })
-@Index('order_collection_store_unique', ['collection_id', 'store_id'], { unique: true })
+@Entity({
+  name: 'order',
+  comment: 'Pedido de 1 loja × 1 coleção, dentro de um OrderBatch (pedido nomeado).',
+})
+@Index('order_batch_store_unique', ['batch_id', 'store_id'], { unique: true })
 @Index('order_tenant_collection_status', ['tenant_id', 'collection_id', 'status'])
 export class Order {
   @PrimaryGeneratedColumn('uuid')
@@ -35,6 +39,13 @@ export class Order {
   @ManyToOne(() => Collection, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'collection_id' })
   collection?: Collection;
+
+  @Column({ type: 'uuid', comment: 'FK order_batch (pedido nomeado agrupador)' })
+  batch_id!: string;
+
+  @ManyToOne(() => OrderBatch, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'batch_id' })
+  batch?: OrderBatch;
 
   @Column({ type: 'uuid', comment: 'FK store' })
   store_id!: string;

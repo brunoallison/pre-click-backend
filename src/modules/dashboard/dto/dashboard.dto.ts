@@ -1,6 +1,13 @@
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
-const SHARE_DIMENSIONS = ['category', 'gender', 'prod_group', 'division'] as const;
+const SHARE_DIMENSIONS = [
+  'category',
+  'gender',
+  'prod_group',
+  'division',
+  'sales_line',
+  'rrp_bucket',
+] as const;
 export type ShareDimension = (typeof SHARE_DIMENSIONS)[number];
 
 export class DashboardQueryInput {
@@ -41,10 +48,9 @@ export interface ShareItem {
 }
 
 export interface DashboardKpisOutput {
-  total_pieces: number;
-  total_rrp: number;
+  total_pieces: { value: number; delta_pct_vs_previous: number | null };
+  total_rrp_brl: { value: number; delta_pct_vs_previous: number | null };
   missing_orders_count: number;
   ai_suggestions_count: number;
-  delta_pieces: number | null;
-  delta_rrp: number | null;
+  ai_avg_confidence_pct: number | null;
 }

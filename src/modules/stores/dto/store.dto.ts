@@ -56,6 +56,35 @@ export class CreateStoreInput {
   is_dummy?: boolean;
 }
 
+export class UpdateStoreInput {
+  @IsOptional()
+  @Matches(/^70000\d{5}$/, { message: 'CUSTOMER deve ter formato 70000XXXXX' })
+  customer_id_sap?: string;
+
+  @IsOptional() @IsString() @Length(2, 120) legal_name?: string;
+  @IsOptional() @IsString() @Length(2, 80) display_name?: string;
+  @IsOptional() @IsInt() @Min(1) store_number?: number;
+  @IsOptional() @IsString() @Length(2, 2) country?: string;
+
+  @IsOptional()
+  @IsIn([...STORE_CONCEPTS])
+  store_concept?: (typeof STORE_CONCEPTS)[number];
+
+  @IsOptional()
+  @IsIn([...CLUSTERS])
+  cluster?: (typeof CLUSTERS)[number];
+
+  @IsOptional() @IsString() @Length(2, 80) city?: string;
+  @IsOptional() @IsString() @Length(2, 2) state?: string;
+
+  @IsOptional()
+  @IsIn([...STATUS_COMP])
+  status_comp?: (typeof STATUS_COMP)[number];
+
+  @IsOptional() @IsBoolean() is_dummy?: boolean;
+  @IsOptional() @IsBoolean() is_active?: boolean;
+}
+
 export class UpdateStoreProfileInput {
   @IsOptional() @IsString() address?: string;
   @IsOptional() @IsString() city?: string;
@@ -80,4 +109,6 @@ export interface StoreOutput {
   status_comp: string;
   is_dummy: boolean;
   is_active: boolean;
+  budget: { amount_brl: number | null; used_brl: number } | null;
+  total_pieces: number;
 }

@@ -25,7 +25,7 @@ export function isValidTransition(from: OrderStatus, to: OrderStatus): boolean {
 }
 
 export class CreateOrderInput {
-  @IsUUID() collection_id!: string;
+  @IsUUID() batch_id!: string;
   @IsUUID() store_id!: string;
 }
 
@@ -36,6 +36,7 @@ export class UpdateOrderStatusInput {
 
 export class ListOrdersQuery {
   @IsOptional() @IsUUID() collection_id?: string;
+  @IsOptional() @IsUUID() batch_id?: string;
   @IsOptional() @IsUUID() store_id?: string;
   @IsOptional()
   @IsIn(['draft', 'submitted', 'exported', 'partial', 'closed'])
@@ -107,6 +108,7 @@ export interface OrderOutput {
   id: string;
   store_id: string;
   collection_id: string;
+  batch_id: string;
   status: string;
   items: OrderItemOutput[];
   totals: { pieces: number; rrp_brl: number; skus_distinct: number };

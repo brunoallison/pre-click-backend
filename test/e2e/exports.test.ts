@@ -3,18 +3,12 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { buildTestApp, type TestContext } from './helpers/app.helper.js';
 
-interface OrderBody {
-  id: string;
-  status: string;
-  store_id: string;
-  collection_id: string;
-}
-
 describe('Exports E2E', () => {
   let ctx: TestContext;
   let server: http.Server;
   let baseUrl: string;
   let tenantId: string;
+  let userId: string;
   let token: string;
   let storeId: string;
   let collectionId: string;
@@ -29,6 +23,7 @@ describe('Exports E2E', () => {
     const tenant = await ctx.seedTenant();
     tenantId = tenant.id;
     const user = await ctx.seedUser({ tenantId, role: 'user' });
+    userId = user.id;
     token = ctx.makeToken({ userId: user.id, tenantId, role: 'user' });
 
     const storeResult = await ctx.dataSource.query<Array<{ id: string }>>(
@@ -54,26 +49,15 @@ describe('Exports E2E', () => {
   });
 
   it('dry_run=true retorna preview sem gerar arquivo no GCS', async () => {
-    const userId = (await ctx.dataSource.query<Array<{ id: string }>>(
-      `SELECT id FROM "user" WHERE tenant_id = $1 LIMIT 1`,
-      [tenantId],
-    ))[0].id;
-    const tkn = ctx.makeToken({ userId, tenantId, role: 'user' });
-
-    // Cria pedido
-    const orderRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tkn}` },
-      body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
-    });
-    const order = (await orderRes.json()) as OrderBody;
+    const batch = await ctx.seedBatch({ tenantId, collectionId, userId, storeIds: [storeId] });
+    const orderId = batch.orderIds[0];
 
     ctx.fakeGcs.clear();
     const gcsKeysBefore = ctx.fakeGcs.keys().length;
 
-    const res = await fetch(`${baseUrl}/orders/${order.id}/export`, {
+    const res = await fetch(`${baseUrl}/orders/${orderId}/export`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tkn}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ strategy: 'by_rdd', dry_run: true }),
     });
 
@@ -83,15 +67,20 @@ describe('Exports E2E', () => {
   });
 
   it('export com qty=0 (pedido vazio) → bloqueado por validação', async () => {
-    // Cria pedido vazio (sem itens)
-    const orderRes = await fetch(`${baseUrl}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+    // Cria batch isolado para evitar conflito de unique(batch_id, store_id) com o teste anterior
+    const coll2 = await ctx.dataSource.query<Array<{ id: string }>>(
+      `INSERT INTO collection (code, country, name, status) VALUES ($1, $2, $3, $4) RETURNING id`,
+      ['FW27X', 'BR', 'Fall/Winter 2027 X', 'open'],
+    );
+    const batch = await ctx.seedBatch({
+      tenantId,
+      collectionId: coll2[0].id,
+      userId,
+      storeIds: [storeId],
     });
-    const order = (await orderRes.json()) as OrderBody;
+    const orderId = batch.orderIds[0];
 
-    const res = await fetch(`${baseUrl}/orders/${order.id}/export`, {
+    const res = await fetch(`${baseUrl}/orders/${orderId}/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ strategy: 'by_rdd', dry_run: false }),

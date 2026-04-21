@@ -13,6 +13,7 @@ export { ProductImage } from './product-image.entity.js';
 export { Grade } from './grade.entity.js';
 export { GradeSizeQty } from './grade-size-qty.entity.js';
 export { Rdd } from './rdd.entity.js';
+export { OrderBatch } from './order-batch.entity.js';
 export { Order } from './order.entity.js';
 export { OrderItem } from './order-item.entity.js';
 export { ExportBatch } from './export-batch.entity.js';

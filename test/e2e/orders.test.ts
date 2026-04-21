@@ -7,6 +7,7 @@ interface OrderBody {
   id: string;
   store_id: string;
   collection_id: string;
+  batch_id: string;
   status: string;
   items: Array<{
     id: string;
@@ -31,6 +32,7 @@ describe('Orders E2E', () => {
   let token: string;
   let storeId: string;
   let collectionId: string;
+  let batchId: string;
 
   beforeAll(async () => {
     ctx = await buildTestApp();
@@ -59,6 +61,9 @@ describe('Orders E2E', () => {
       ['SS27', 'BR', 'Spring/Summer 2027', 'open'],
     );
     collectionId = collResult[0].id;
+
+    const batch = await ctx.seedBatch({ tenantId, collectionId, userId, storeIds: [] });
+    batchId = batch.id;
   });
 
   afterAll(async () => {
@@ -73,7 +78,7 @@ describe('Orders E2E', () => {
       const res = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
 
       expect(res.status).toBe(200);
@@ -88,14 +93,14 @@ describe('Orders E2E', () => {
       const res1 = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
       const body1 = (await res1.json()) as OrderBody;
 
       const res2 = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
       const body2 = (await res2.json()) as OrderBody;
 
@@ -113,7 +118,7 @@ describe('Orders E2E', () => {
       const orderRes = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
       const orderBody = (await orderRes.json()) as OrderBody;
       orderId = orderBody.id;
@@ -216,7 +221,7 @@ describe('Orders E2E', () => {
       const orderRes = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
       const b = (await orderRes.json()) as OrderBody;
       orderId = b.id;
@@ -254,7 +259,7 @@ describe('Orders E2E', () => {
       const orderRes = await fetch(`${baseUrl}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ collection_id: collectionId, store_id: storeId }),
+        body: JSON.stringify({ batch_id: batchId, store_id: storeId }),
       });
       const b = (await orderRes.json()) as OrderBody;
       orderId = b.id;
