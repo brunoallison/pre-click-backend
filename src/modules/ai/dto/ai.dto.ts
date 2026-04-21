@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator';
+import { IsIn, IsObject, IsOptional, IsString, IsUUID, Length } from 'class-validator';
 
 export class ChatInput {
   @IsString()
@@ -12,12 +12,50 @@ export class ChatInput {
   @IsOptional()
   @IsUUID()
   order_id?: string;
+
+  @IsOptional()
+  @IsUUID()
+  conversation_id?: string;
+
+  @IsOptional()
+  @IsObject()
+  ui_context?: {
+    collection_id?: string;
+    store_id?: string;
+    order_id?: string;
+  };
 }
 
 export interface ChatOutput {
   session_id: string;
   reply: string;
+  conversation_id?: string;
+  tool_calls?: Array<{ name: string; result: unknown }>;
   actions?: Array<{ label: string; type: string; payload: Record<string, unknown> }>;
+}
+
+export interface AiConversationOutput {
+  id: string;
+  visibility: 'tenant' | 'private';
+  title: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiConversationDetailOutput extends AiConversationOutput {
+  messages: AiMessageOutput[];
+}
+
+export interface AiMessageOutput {
+  id: string;
+  role: 'user' | 'assistant' | 'tool';
+  content: unknown[];
+  user_id: string | null;
+  tokens_input: number | null;
+  tokens_output: number | null;
+  model: string | null;
+  created_at: string;
 }
 
 export class SuggestGradeInput {

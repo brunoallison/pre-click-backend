@@ -24,4 +24,6 @@ export { ImportBase } from './import-base.entity.js';
 export { ImportBaseDiff } from './import-base-diff.entity.js';
 export { AiContext } from './ai-context.entity.js';
 export { AiCall } from './ai-call.entity.js';
+export { AiConversation } from './ai-conversation.entity.js';
+export { AiMessage } from './ai-message.entity.js';
 export { ClusterRestrictionAlias } from './cluster-restriction-alias.entity.js';
