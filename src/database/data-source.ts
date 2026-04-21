@@ -13,5 +13,5 @@ export const AppDataSource = new DataSource({
   entities: Object.values(entities).filter((e) => typeof e === 'function') as unknown[] as never[],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
-  logging: migrationEnv.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+  logging: migrationEnv.NODE_ENV === 'dev' ? ['warn', 'error'] : ['error'],
 });

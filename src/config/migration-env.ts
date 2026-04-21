@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 const schema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production', 'dev', 'prod']).default('development'),
+  NODE_ENV: z.enum(['dev', 'test', 'prod']).default('dev'),
   POSTGRES_HOST: z.string().min(1).default('127.0.0.1'),
   POSTGRES_PORT: z.coerce.number().int().positive().default(5432),
   POSTGRES_USERNAME: z.string().min(1),

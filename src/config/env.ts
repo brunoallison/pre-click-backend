@@ -7,7 +7,7 @@ const boolFromEnv = z
   .transform((v) => (typeof v === 'boolean' ? v : ['true', '1', 'yes'].includes(v.toLowerCase())));
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production', 'dev', 'prod']).default('development'),
+  NODE_ENV: z.enum(['dev', 'test', 'prod']).default('dev'),
   PORT: z.coerce.number().int().positive().default(3000),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 

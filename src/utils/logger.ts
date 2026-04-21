@@ -2,7 +2,7 @@ import pino from 'pino';
 import { env } from '../config/env.js';
 
 function buildTransport(): pino.TransportSingleOptions | pino.TransportMultiOptions | undefined {
-  if (env.NODE_ENV === 'development') {
+  if (env.NODE_ENV === 'dev') {
     return { target: 'pino-pretty', options: { colorize: true, singleLine: false } };
   }
 
