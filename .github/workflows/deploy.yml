@@ -345,6 +345,12 @@ jobs:
                     sizeLimit: 128Mi
           EOF
 
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
+            --region ${{ vars.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --project ${{ vars.PROJECT_ID }}
+
       - name: Show service URL
         run: |
           gcloud run services describe ${{ env.SERVICE_NAME }} \
