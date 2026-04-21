@@ -322,7 +322,8 @@ jobs:
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
                   - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
-                  - "--health-check-port=9090"
+                  - "--health-check"
+                  - "--http-port=9090"
                   startupProbe:
                     httpGet:
                       path: /startup
