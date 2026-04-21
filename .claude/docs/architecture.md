@@ -21,6 +21,11 @@ API REST que substitui a planilha `BASE PEDIDO` + macro VBA. Três capacidades p
 - **Auth própria, sem gateway** — diferente do taya (que roda atrás do Apigee). Aqui o backend implementa `/auth/login` + rotação de refresh + revogação via Redis. `tenant_id` é derivado do JWT, não de header injetado.
 - **Multi-tenant explícito no código** — `WHERE tenant_id = :tenantId` em toda query; RLS Postgres é backlog (não MVP).
 - **Export síncrono no handler** — xlsx de 400 linhas gera em < 2s com exceljs; BullMQ só pra import de BASE (minutos).
+- **Cookie `SameSite=Lax` + proxy Vercel** — o Chrome bloqueia cookies `SameSite=None` cross-site. Solução MVP: o frontend proxeia `/api/*` para o Cloud Run via `vercel.json`, tornando tudo same-origin. `COOKIE_SECURE=false` → `SameSite=Lax`. Solução definitiva: domínio próprio com subdomínio `api.*` same-site (ver `infra.md` no orquestrador).
+
+## Deploy e infra
+
+Ver [`../../../.claude/docs/infra.md`](../../../.claude/docs/infra.md) para todos os detalhes de Cloud SQL, Cloud Run, Redis, Vercel, Datadog e procedimentos de operação (seed de admins, criação de tenant/coleção via SQL).
 
 ---
 
