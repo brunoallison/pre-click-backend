@@ -66,6 +66,9 @@ jobs:
             --max-retries 1 \
             --task-timeout 600 \
             --tasks 1 \
+            --network=default \
+            --subnet=default \
+            --vpc-egress=private-ranges-only \
             --add-volume=name=dd-logs,type=in-memory,size-limit=256Mi \
             --add-volume=name=dd-run,type=in-memory,size-limit=128Mi \
             \
@@ -77,12 +80,11 @@ jobs:
             --command /bin/sh \
             --args "-c,status=0; npm run migration:run || status=\$?; sleep 30; exit \$status" \
             --set-env-vars "\
-              POSTGRES_HOST=127.0.0.1,\
+              POSTGRES_HOST=${{ secrets.POSTGRES_HOST }},\
               POSTGRES_PORT=${{ secrets.POSTGRES_PORT }},\
               POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }},\
               POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }},\
               POSTGRES_SCHEMA=${{ secrets.POSTGRES_SCHEMA }},\
-              CLOUD_SQL_CONNECTION_NAME=${{ secrets.CLOUD_SQL_CONNECTION_NAME }},\
               NODE_ENV=${{ vars.NODE_ENV }},\
               LOG_LEVEL=${{ vars.LOG_LEVEL }},\
               LOG_FILE=/var/lib/datadog-agent/logs/migration.log,\
@@ -98,7 +100,7 @@ jobs:
             --add-volume-mount=volume=dd-run,mount-path=/opt/datadog-agent/run \
             \
             --container datadog-agent \
-            --image gcr.io/datadoghq/serverless-init:latest \
+            --image gcr.io/datadoghq/serverless-init:1.8.2 \
             --memory 512Mi \
             --cpu 0.5 \
             --set-env-vars "\
@@ -125,13 +127,7 @@ jobs:
               DD_WORKLOADMETA_REMOTE_TIMEOUT_SECONDS=2" \
             --add-volume-mount=volume=dd-logs,mount-path=/var/lib/datadog-agent/logs \
             --add-volume-mount=volume=dd-run,mount-path=/opt/datadog-agent/run \
-            --startup-probe=tcpSocket.port=12345,periodSeconds=10,failureThreshold=6,timeoutSeconds=1 \
-            \
-            --container cloud-sql-proxy \
-            --image gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest \
-            --memory 256Mi \
-            --cpu 0.25 \
-            --args "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+            --startup-probe=tcpSocket.port=12345,periodSeconds=10,failureThreshold=6,timeoutSeconds=1
 
           gcloud run jobs execute ${{ env.SERVICE_NAME }}-migration \
             --region ${{ vars.REGION }} \
@@ -141,9 +137,7 @@ jobs:
       - name: Deploy pre-click
         run: |
           IMAGE="${{ vars.REGION }}-docker.pkg.dev/${{ vars.PROJECT_ID }}/${{ env.PROJECT_PREFIX }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          gcloud run services replace /dev/stdin \
-            --region ${{ vars.REGION }} \
-            --project ${{ vars.PROJECT_ID }} <<EOF
+          cat > /tmp/service.yaml <<EOF
           apiVersion: serving.knative.dev/v1
           kind: Service
           metadata:
@@ -157,7 +151,9 @@ jobs:
                   autoscaling.knative.dev/minScale: "0"
                   autoscaling.knative.dev/maxScale: "5"
                   run.googleapis.com/cpu-throttling: "false"
-                  run.googleapis.com/container-dependencies: '{"${{ env.SERVICE_NAME }}":["datadog-agent","cloud-sql-proxy"]}'
+                  run.googleapis.com/container-dependencies: '{"${{ env.SERVICE_NAME }}":["datadog-agent"]}'
+                  run.googleapis.com/network-interfaces: '[{"network":"projects/${{ vars.PROJECT_ID }}/global/networks/default","subnetwork":"projects/${{ vars.PROJECT_ID }}/regions/${{ vars.REGION }}/subnetworks/default"}]'
+                  run.googleapis.com/vpc-access-egress: private-ranges-only
               spec:
                 timeoutSeconds: 300
                 containerConcurrency: 80
@@ -180,7 +176,7 @@ jobs:
                   - name: LOG_FILE
                     value: "/var/lib/datadog-agent/logs/app.log"
                   - name: POSTGRES_HOST
-                    value: "127.0.0.1"
+                    value: "${{ secrets.POSTGRES_HOST }}"
                   - name: POSTGRES_PORT
                     value: "${{ secrets.POSTGRES_PORT }}"
                   - name: POSTGRES_DATABASE
@@ -194,8 +190,6 @@ jobs:
                       secretKeyRef:
                         key: latest
                         name: POSTGRES_PASSWORD
-                  - name: CLOUD_SQL_CONNECTION_NAME
-                    value: "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}"
                   - name: REDIS_HOST
                     value: "${{ secrets.REDIS_HOST }}"
                   - name: REDIS_PORT
@@ -240,10 +234,7 @@ jobs:
                   - name: DD_SITE
                     value: "${{ vars.DD_SITE }}"
                   - name: DD_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        key: latest
-                        name: DD_API_KEY
+                    value: "${{ secrets.DD_API_KEY }}"
                   startupProbe:
                     tcpSocket:
                       port: 8080
@@ -255,7 +246,7 @@ jobs:
                       cpu: "1000m"
                       memory: "1Gi"
                 - name: datadog-agent
-                  image: gcr.io/datadoghq/serverless-init:latest
+                  image: gcr.io/datadoghq/serverless-init:1.8.2
                   volumeMounts:
                   - name: dd-logs
                     mountPath: /var/lib/datadog-agent/logs
@@ -263,10 +254,7 @@ jobs:
                     mountPath: /opt/datadog-agent/run
                   env:
                   - name: DD_API_KEY
-                    valueFrom:
-                      secretKeyRef:
-                        key: latest
-                        name: DD_API_KEY
+                    value: "${{ secrets.DD_API_KEY }}"
                   - name: DD_SITE
                     value: "${{ vars.DD_SITE }}"
                   - name: DD_SERVICE
@@ -318,22 +306,6 @@ jobs:
                     limits:
                       cpu: "500m"
                       memory: "512Mi"
-                - name: cloud-sql-proxy
-                  image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
-                  args:
-                  - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
-                  - "--address=0.0.0.0"
-                  startupProbe:
-                    tcpSocket:
-                      port: 5432
-                    initialDelaySeconds: 2
-                    periodSeconds: 5
-                    timeoutSeconds: 3
-                    failureThreshold: 12
-                  resources:
-                    limits:
-                      cpu: "250m"
-                      memory: "256Mi"
                 volumes:
                 - name: dd-logs
                   emptyDir:
@@ -342,6 +314,10 @@ jobs:
                   emptyDir:
                     sizeLimit: 128Mi
           EOF
+
+          gcloud run services replace /tmp/service.yaml \
+            --region ${{ vars.REGION }} \
+            --project ${{ vars.PROJECT_ID }}
 
           gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
             --region ${{ vars.REGION }} \
