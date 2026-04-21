@@ -19,7 +19,9 @@ interface DashboardInsights {
   top5_stores: StoreVolume[];
 }
 
-export function buildGetDashboardInsightsSkill(dataSource: DataSource): Skill<GetDashboardInsightsInput, DashboardInsights | { error: string }> {
+export function buildGetDashboardInsightsSkill(
+  dataSource: DataSource,
+): Skill<GetDashboardInsightsInput, DashboardInsights | { error: string }> {
   return {
     name: 'get_dashboard_insights',
     description:
@@ -31,7 +33,10 @@ export function buildGetDashboardInsightsSkill(dataSource: DataSource): Skill<Ge
         collection_id: { type: 'string', description: 'ID da coleção (opcional)' },
       },
     },
-    async handler(ctx: SkillContext, input: GetDashboardInsightsInput): Promise<DashboardInsights | { error: string }> {
+    async handler(
+      ctx: SkillContext,
+      input: GetDashboardInsightsInput,
+    ): Promise<DashboardInsights | { error: string }> {
       const qr = dataSource.createQueryRunner();
       try {
         await qr.connect();

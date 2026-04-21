@@ -25,7 +25,9 @@ interface ListProductsOutput {
   total: number;
 }
 
-export function buildListProductsSkill(products: Repository<Product>): Skill<ListProductsInput, ListProductsOutput> {
+export function buildListProductsSkill(
+  products: Repository<Product>,
+): Skill<ListProductsInput, ListProductsOutput> {
   return {
     name: 'list_products',
     description:

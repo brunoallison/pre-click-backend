@@ -15,7 +15,9 @@ interface OrderInsights {
   collection_code: string | null;
 }
 
-export function buildGetOrderInsightsSkill(dataSource: DataSource): Skill<GetOrderInsightsInput, OrderInsights | { error: string }> {
+export function buildGetOrderInsightsSkill(
+  dataSource: DataSource,
+): Skill<GetOrderInsightsInput, OrderInsights | { error: string }> {
   return {
     name: 'get_order_insights',
     description:
@@ -28,7 +30,10 @@ export function buildGetOrderInsightsSkill(dataSource: DataSource): Skill<GetOrd
         order_id: { type: 'string', description: 'ID do pedido' },
       },
     },
-    async handler(ctx: SkillContext, input: GetOrderInsightsInput): Promise<OrderInsights | { error: string }> {
+    async handler(
+      ctx: SkillContext,
+      input: GetOrderInsightsInput,
+    ): Promise<OrderInsights | { error: string }> {
       const qr = dataSource.createQueryRunner();
       try {
         await qr.connect();
@@ -73,10 +78,9 @@ export function buildGetOrderInsightsSkill(dataSource: DataSource): Skill<GetOrd
         const agg = aggRow[0] ?? { total_pcs: '0', total_rrp: '0', items_count: '0' };
 
         // Conta obrigatórios faltando (required mas sem item no pedido)
-        const orderInfoRows = await qr.manager.query<Array<{ collection_id: string; store_id: string }>>(
-          `SELECT o.collection_id, o.store_id FROM "order" o WHERE o.id = $1`,
-          [input.order_id],
-        );
+        const orderInfoRows = await qr.manager.query<
+          Array<{ collection_id: string; store_id: string }>
+        >(`SELECT o.collection_id, o.store_id FROM "order" o WHERE o.id = $1`, [input.order_id]);
         const orderInfo = orderInfoRows[0];
 
         let requiredMissing = 0;

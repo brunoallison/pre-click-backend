@@ -12,7 +12,9 @@ interface ExplainInsightOutput {
   data: Record<string, unknown>;
 }
 
-export function buildExplainInsightSkill(dataSource: DataSource): Skill<ExplainInsightInput, ExplainInsightOutput | { error: string }> {
+export function buildExplainInsightSkill(
+  dataSource: DataSource,
+): Skill<ExplainInsightInput, ExplainInsightOutput | { error: string }> {
   return {
     name: 'explain_insight',
     description:
@@ -31,24 +33,35 @@ export function buildExplainInsightSkill(dataSource: DataSource): Skill<ExplainI
         store_id: { type: 'string', description: 'ID da loja (opcional)' },
       },
     },
-    async handler(ctx: SkillContext, input: ExplainInsightInput): Promise<ExplainInsightOutput | { error: string }> {
+    async handler(
+      ctx: SkillContext,
+      input: ExplainInsightInput,
+    ): Promise<ExplainInsightOutput | { error: string }> {
       const qr = dataSource.createQueryRunner();
       try {
         await qr.connect();
 
         const params: unknown[] = [ctx.tenantId];
         const colFilter = input.collection_id
-          ? (() => { params.push(input.collection_id); return `AND o.collection_id = $${params.length}`; })()
+          ? (() => {
+              params.push(input.collection_id);
+              return `AND o.collection_id = $${params.length}`;
+            })()
           : '';
         const storeFilter = input.store_id
-          ? (() => { params.push(input.store_id); return `AND o.store_id = $${params.length}`; })()
+          ? (() => {
+              params.push(input.store_id);
+              return `AND o.store_id = $${params.length}`;
+            })()
           : '';
 
         let data: Record<string, unknown> = {};
 
         switch (input.topic) {
           case 'required_missing': {
-            const rows = await qr.manager.query<Array<{ store_display_name: string; missing: string }>>(
+            const rows = await qr.manager.query<
+              Array<{ store_display_name: string; missing: string }>
+            >(
               `SELECT s.display_name AS store_display_name, COUNT(DISTINCT p.id) AS missing
                FROM "order" o
                JOIN store s ON s.id = o.store_id
@@ -63,7 +76,12 @@ export function buildExplainInsightSkill(dataSource: DataSource): Skill<ExplainI
                LIMIT 10`,
               params,
             );
-            data = { stores_with_missing: rows.map((r) => ({ store: r.store_display_name, missing: parseInt(r.missing) })) };
+            data = {
+              stores_with_missing: rows.map((r) => ({
+                store: r.store_display_name,
+                missing: parseInt(r.missing),
+              })),
+            };
             break;
           }
           case 'budget_status': {
@@ -90,13 +108,17 @@ export function buildExplainInsightSkill(dataSource: DataSource): Skill<ExplainI
                 store: r.store_display_name,
                 used_brl: parseFloat(r.used_brl),
                 budget_brl: r.budget_brl ? parseFloat(r.budget_brl) : null,
-                pct: r.budget_brl ? Math.round((parseFloat(r.used_brl) / parseFloat(r.budget_brl)) * 100) : null,
+                pct: r.budget_brl
+                  ? Math.round((parseFloat(r.used_brl) / parseFloat(r.budget_brl)) * 100)
+                  : null,
               })),
             };
             break;
           }
           case 'division_mix': {
-            const rows = await qr.manager.query<Array<{ division: string; total_pcs: string; total_rrp: string }>>(
+            const rows = await qr.manager.query<
+              Array<{ division: string; total_pcs: string; total_rrp: string }>
+            >(
               `SELECT p.division,
                  SUM(oi.multiplier * g.total_pieces) AS total_pcs,
                  SUM(oi.multiplier * g.total_pieces * p.rrp::numeric) AS total_rrp
@@ -119,7 +141,9 @@ export function buildExplainInsightSkill(dataSource: DataSource): Skill<ExplainI
             break;
           }
           default: {
-            return { error: `Tópico '${input.topic}' não suportado. Use: required_missing, budget_status, rdd_coverage, division_mix` };
+            return {
+              error: `Tópico '${input.topic}' não suportado. Use: required_missing, budget_status, rdd_coverage, division_mix`,
+            };
           }
         }
 

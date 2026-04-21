@@ -89,7 +89,9 @@ export class DownloadBatchZipTask extends Task<never> {
         }
 
         // Carrega stores para nomear as subpastas
-        const storeIds = [...new Set(files.map((f) => f.store_id).filter((id): id is string => !!id))];
+        const storeIds = [
+          ...new Set(files.map((f) => f.store_id).filter((id): id is string => !!id)),
+        ];
         const storeList = storeIds.length > 0 ? await task.stores.findByIds(storeIds) : [];
         const storeMap = new Map(storeList.map((s) => [s.id, s]));
 

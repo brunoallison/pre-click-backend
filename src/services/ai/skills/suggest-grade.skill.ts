@@ -21,7 +21,9 @@ interface SuggestGradeOutput {
 
 const SYSTEM_PROMPT = `Você sugere uma grade (distribuição por tamanho) e multiplicador N para um SKU Adidas dado um produto, loja e pedido. Retorne APENAS JSON no formato {"grade_id": "<uuid>", "multiplier": <int>, "rationale": "<texto em pt-br>", "confidence": <0..1>}. Se não houver grade adequada, escolha a primeira da lista. Nunca invente IDs.`;
 
-function tryParse(text: string): { grade_id: string; multiplier: number; rationale: string; confidence: number } | null {
+function tryParse(
+  text: string,
+): { grade_id: string; multiplier: number; rationale: string; confidence: number } | null {
   try {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return null;
@@ -32,7 +34,12 @@ function tryParse(text: string): { grade_id: string; multiplier: number; rationa
       typeof obj.rationale === 'string' &&
       typeof obj.confidence === 'number'
     ) {
-      return { grade_id: obj.grade_id, multiplier: obj.multiplier, rationale: obj.rationale, confidence: obj.confidence };
+      return {
+        grade_id: obj.grade_id,
+        multiplier: obj.multiplier,
+        rationale: obj.rationale,
+        confidence: obj.confidence,
+      };
     }
     return null;
   } catch {
@@ -60,8 +67,13 @@ export function buildSuggestGradeSkill(
         order_id: { type: 'string', description: 'ID do pedido' },
       },
     },
-    async handler(ctx: SkillContext, input: SuggestGradeInput): Promise<SuggestGradeOutput | { error: string }> {
-      const order = await orders.findOne({ where: { id: input.order_id, tenant_id: ctx.tenantId } });
+    async handler(
+      ctx: SkillContext,
+      input: SuggestGradeInput,
+    ): Promise<SuggestGradeOutput | { error: string }> {
+      const order = await orders.findOne({
+        where: { id: input.order_id, tenant_id: ctx.tenantId },
+      });
       if (!order) return { error: 'Pedido não encontrado' };
 
       const product = await products.findOne({ where: { id: input.product_id } });

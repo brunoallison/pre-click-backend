@@ -49,11 +49,12 @@ export class DuplicateBatchTask extends Task<OrderBatchDetailOutput> {
     });
     const storeIds = sourceOrders.map((o) => o.store_id);
 
-    const sourceItems = sourceOrders.length > 0
-      ? await this.items.find({
-          where: sourceOrders.map((o) => ({ order_id: o.id, tenant_id: tenantId })),
-        })
-      : [];
+    const sourceItems =
+      sourceOrders.length > 0
+        ? await this.items.find({
+            where: sourceOrders.map((o) => ({ order_id: o.id, tenant_id: tenantId })),
+          })
+        : [];
 
     // Map sourceOrderId → items for quick lookup inside transaction
     const itemsByOrder = new Map<string, OrderItem[]>();
