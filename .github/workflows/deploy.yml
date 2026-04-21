@@ -322,6 +322,7 @@ jobs:
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
                   - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+                  - "--address=0.0.0.0"
                   startupProbe:
                     tcpSocket:
                       port: 5432
