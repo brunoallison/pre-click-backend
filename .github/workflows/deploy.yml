@@ -324,6 +324,13 @@ jobs:
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
                   - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+                  startupProbe:
+                    tcpSocket:
+                      port: 5432
+                    initialDelaySeconds: 0
+                    periodSeconds: 5
+                    timeoutSeconds: 1
+                    failureThreshold: 12
                   resources:
                     limits:
                       cpu: "250m"
@@ -509,6 +516,13 @@ jobs:
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
                   - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+                  startupProbe:
+                    tcpSocket:
+                      port: 5432
+                    initialDelaySeconds: 0
+                    periodSeconds: 5
+                    timeoutSeconds: 1
+                    failureThreshold: 12
                   resources:
                     limits:
                       cpu: "250m"
