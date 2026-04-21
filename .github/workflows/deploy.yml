@@ -179,8 +179,6 @@ jobs:
                     value: "${{ vars.LOG_LEVEL }}"
                   - name: LOG_FILE
                     value: "/var/lib/datadog-agent/logs/app.log"
-                  - name: PORT
-                    value: "8080"
                   - name: POSTGRES_HOST
                     value: "127.0.0.1"
                   - name: POSTGRES_PORT
