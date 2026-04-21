@@ -78,11 +78,11 @@ jobs:
             --args "-c,status=0; npm run migration:run || status=\$?; sleep 30; exit \$status" \
             --set-env-vars "\
               POSTGRES_HOST=127.0.0.1,\
-              POSTGRES_PORT=${{ vars.POSTGRES_PORT }},\
-              POSTGRES_DATABASE=${{ vars.POSTGRES_DATABASE }},\
-              POSTGRES_USERNAME=${{ vars.POSTGRES_USERNAME }},\
-              POSTGRES_SCHEMA=${{ vars.POSTGRES_SCHEMA }},\
-              CLOUD_SQL_CONNECTION_NAME=${{ vars.CLOUD_SQL_CONNECTION_NAME }},\
+              POSTGRES_PORT=${{ secrets.POSTGRES_PORT }},\
+              POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }},\
+              POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }},\
+              POSTGRES_SCHEMA=${{ secrets.POSTGRES_SCHEMA }},\
+              CLOUD_SQL_CONNECTION_NAME=${{ secrets.CLOUD_SQL_CONNECTION_NAME }},\
               NODE_ENV=${{ vars.NODE_ENV }},\
               LOG_LEVEL=${{ vars.LOG_LEVEL }},\
               LOG_FILE=/var/lib/datadog-agent/logs/migration.log,\
@@ -131,7 +131,7 @@ jobs:
             --image gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest \
             --memory 256Mi \
             --cpu 0.25 \
-            --args "${{ vars.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+            --args "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
 
           gcloud run jobs execute ${{ env.SERVICE_NAME }}-migration \
             --region ${{ vars.REGION }} \
@@ -191,26 +191,26 @@ jobs:
                   - name: POSTGRES_HOST
                     value: "127.0.0.1"
                   - name: POSTGRES_PORT
-                    value: "${{ vars.POSTGRES_PORT }}"
+                    value: "${{ secrets.POSTGRES_PORT }}"
                   - name: POSTGRES_DATABASE
-                    value: "${{ vars.POSTGRES_DATABASE }}"
+                    value: "${{ secrets.POSTGRES_DATABASE }}"
                   - name: POSTGRES_USERNAME
-                    value: "${{ vars.POSTGRES_USERNAME }}"
+                    value: "${{ secrets.POSTGRES_USERNAME }}"
                   - name: POSTGRES_SCHEMA
-                    value: "${{ vars.POSTGRES_SCHEMA }}"
+                    value: "${{ secrets.POSTGRES_SCHEMA }}"
                   - name: POSTGRES_PASSWORD
                     valueFrom:
                       secretKeyRef:
                         key: latest
                         name: POSTGRES_PASSWORD
                   - name: CLOUD_SQL_CONNECTION_NAME
-                    value: "${{ vars.CLOUD_SQL_CONNECTION_NAME }}"
+                    value: "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}"
                   - name: REDIS_HOST
-                    value: "${{ vars.REDIS_HOST }}"
+                    value: "${{ secrets.REDIS_HOST }}"
                   - name: REDIS_PORT
-                    value: "${{ vars.REDIS_PORT }}"
+                    value: "${{ secrets.REDIS_PORT }}"
                   - name: REDIS_TLS
-                    value: "${{ vars.REDIS_TLS }}"
+                    value: "${{ secrets.REDIS_TLS }}"
                   - name: REDIS_PASSWORD
                     valueFrom:
                       secretKeyRef:
@@ -222,7 +222,7 @@ jobs:
                         key: latest
                         name: JWT_SECRET
                   - name: GCS_BUCKET_NAME
-                    value: "${{ vars.GCS_BUCKET_NAME }}"
+                    value: "${{ secrets.GCS_BUCKET_NAME }}"
                   - name: ANTHROPIC_API_KEY
                     valueFrom:
                       secretKeyRef:
@@ -330,7 +330,7 @@ jobs:
                 - name: cloud-sql-proxy
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
-                  - "${{ vars.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+                  - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
                   resources:
                     limits:
                       cpu: "250m"
@@ -399,13 +399,13 @@ jobs:
                         key: latest
                         name: POSTGRES_PASSWORD
                   - name: CLOUD_SQL_CONNECTION_NAME
-                    value: "${{ vars.CLOUD_SQL_CONNECTION_NAME }}"
+                    value: "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}"
                   - name: REDIS_HOST
-                    value: "${{ vars.REDIS_HOST }}"
+                    value: "${{ secrets.REDIS_HOST }}"
                   - name: REDIS_PORT
-                    value: "${{ vars.REDIS_PORT }}"
+                    value: "${{ secrets.REDIS_PORT }}"
                   - name: REDIS_TLS
-                    value: "${{ vars.REDIS_TLS }}"
+                    value: "${{ secrets.REDIS_TLS }}"
                   - name: REDIS_PASSWORD
                     valueFrom:
                       secretKeyRef:
@@ -417,7 +417,7 @@ jobs:
                         key: latest
                         name: JWT_SECRET
                   - name: GCS_BUCKET_NAME
-                    value: "${{ vars.GCS_BUCKET_NAME }}"
+                    value: "${{ secrets.GCS_BUCKET_NAME }}"
                   - name: ANTHROPIC_API_KEY
                     valueFrom:
                       secretKeyRef:
@@ -515,7 +515,7 @@ jobs:
                 - name: cloud-sql-proxy
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
                   args:
-                  - "${{ vars.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
+                  - "${{ secrets.CLOUD_SQL_CONNECTION_NAME }}?port=5432"
                   resources:
                     limits:
                       cpu: "250m"
