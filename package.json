@@ -18,7 +18,8 @@
     "typeorm": "tsx ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
-    "migration:revert": "npm run typeorm -- migration:revert"
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "seed:orders": "tsx src/database/seeds/seed-orders-from-xlsx.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",
