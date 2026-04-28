@@ -15,6 +15,7 @@ interface SeasonOutput {
   collection_id: string;
   code: string;
   country: string;
+  name: string;
   status: SeasonStatus;
   order_window: { start: string | null; end: string | null };
   delivery_window: { start: string | null; end: string | null };
@@ -99,6 +100,7 @@ export class ListSeasonsTask extends Task<SeasonOutput[]> {
       return {
         collection_id: c.id,
         code: c.code,
+        name: c.name,
         country: c.country,
         status: resolveCollectionStatus(c, now),
         order_window: {
