@@ -23,7 +23,14 @@ async function main(): Promise<void> {
       await users.update(existing.id, { password_hash, is_active: true });
       logger.info({ email }, 'seed-admins: senha atualizada');
     } else {
-      await users.save({ email, password_hash, display_name, role: 'super_admin', tenant_id: null, is_active: true });
+      await users.save({
+        email,
+        password_hash,
+        display_name,
+        role: 'super_admin',
+        tenant_id: null,
+        is_active: true,
+      });
       logger.info({ email }, 'seed-admins: usuário criado');
     }
   }
