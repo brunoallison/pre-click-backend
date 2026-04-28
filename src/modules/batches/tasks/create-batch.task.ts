@@ -8,6 +8,7 @@ import { Inject, Injectable } from '../../../utils/di.js';
 import { Task, type BaseInput } from '../../../utils/task.js';
 import { verifyBody } from '../../../utils/schema.js';
 import { CreateOrderBatchInput, type OrderBatchDetailOutput } from '../dto/batches.dto.js';
+import { resolveCollectionStatus, isOrderable } from '../../../utils/collection-status.js';
 
 @Injectable()
 export class CreateBatchTask extends Task<OrderBatchDetailOutput> {
@@ -35,6 +36,14 @@ export class CreateBatchTask extends Task<OrderBatchDetailOutput> {
     const collection = await this.collections.findOne({ where: { id: dto.collection_id } });
     if (!collection) {
       throw HttpError.NotFound('collection_not_found', 'Coleção não encontrada');
+    }
+
+    const derivedStatus = resolveCollectionStatus(collection);
+    if (!isOrderable(derivedStatus)) {
+      throw HttpError.Forbidden(
+        'collection_not_orderable',
+        `Coleção ${collection.code} está em '${derivedStatus}'; criação de pedido permitida apenas em 'next' ou 'open'`,
+      );
     }
 
     const duplicated = await this.batches.findOne({

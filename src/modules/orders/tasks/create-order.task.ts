@@ -1,4 +1,5 @@
 import type { Repository } from 'typeorm';
+import { Collection } from '../../../entities/collection.entity.js';
 import { Order } from '../../../entities/order.entity.js';
 import { OrderBatch } from '../../../entities/order-batch.entity.js';
 import { Store } from '../../../entities/store.entity.js';
@@ -7,6 +8,7 @@ import { Inject, Injectable } from '../../../utils/di.js';
 import { Task, type BaseInput } from '../../../utils/task.js';
 import { verifyBody } from '../../../utils/schema.js';
 import { CreateOrderInput, type OrderOutput } from '../dto/orders.dto.js';
+import { resolveCollectionStatus, isOrderable } from '../../../utils/collection-status.js';
 
 @Injectable()
 export class CreateOrderTask extends Task<OrderOutput> {
@@ -16,6 +18,7 @@ export class CreateOrderTask extends Task<OrderOutput> {
     @Inject('OrderRepository') private readonly orders: Repository<Order>,
     @Inject('OrderBatchRepository') private readonly batches: Repository<OrderBatch>,
     @Inject('StoreRepository') private readonly stores: Repository<Store>,
+    @Inject('CollectionRepository') private readonly collections: Repository<Collection>,
   ) {
     super();
   }
@@ -30,6 +33,18 @@ export class CreateOrderTask extends Task<OrderOutput> {
     });
     if (!batch) {
       throw HttpError.NotFound('batch_not_found', 'Pedido (OrderBatch) não encontrado');
+    }
+
+    const collection = await this.collections.findOne({ where: { id: batch.collection_id } });
+    if (!collection) {
+      throw HttpError.NotFound('collection_not_found', 'Coleção não encontrada');
+    }
+    const derivedStatus = resolveCollectionStatus(collection);
+    if (!isOrderable(derivedStatus)) {
+      throw HttpError.Forbidden(
+        'collection_not_orderable',
+        `Coleção ${collection.code} está em '${derivedStatus}'; criação de pedido permitida apenas em 'next' ou 'open'`,
+      );
     }
 
     const store = await this.stores.findOne({
