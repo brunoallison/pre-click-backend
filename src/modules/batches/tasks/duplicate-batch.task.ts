@@ -1,4 +1,5 @@
 import { type DataSource, type Repository } from 'typeorm';
+import { Collection } from '../../../entities/collection.entity.js';
 import { Order } from '../../../entities/order.entity.js';
 import { OrderBatch } from '../../../entities/order-batch.entity.js';
 import { OrderItem } from '../../../entities/order-item.entity.js';
@@ -7,6 +8,7 @@ import { Inject, Injectable } from '../../../utils/di.js';
 import { Task, type BaseInput } from '../../../utils/task.js';
 import { verifyBody } from '../../../utils/schema.js';
 import { DuplicateOrderBatchInput, type OrderBatchDetailOutput } from '../dto/batches.dto.js';
+import { resolveCollectionStatus, isOrderable } from '../../../utils/collection-status.js';
 
 @Injectable()
 export class DuplicateBatchTask extends Task<OrderBatchDetailOutput> {
@@ -17,6 +19,7 @@ export class DuplicateBatchTask extends Task<OrderBatchDetailOutput> {
     @Inject('OrderBatchRepository') private readonly batches: Repository<OrderBatch>,
     @Inject('OrderRepository') private readonly orders: Repository<Order>,
     @Inject('OrderItemRepository') private readonly items: Repository<OrderItem>,
+    @Inject('CollectionRepository') private readonly collections: Repository<Collection>,
   ) {
     super();
   }
@@ -31,6 +34,18 @@ export class DuplicateBatchTask extends Task<OrderBatchDetailOutput> {
     const source = await this.batches.findOne({ where: { id, tenant_id: tenantId } });
     if (!source) {
       throw HttpError.NotFound('batch_not_found', 'Pedido não encontrado');
+    }
+
+    const collection = await this.collections.findOne({ where: { id: source.collection_id } });
+    if (!collection) {
+      throw HttpError.NotFound('collection_not_found', 'Coleção não encontrada');
+    }
+    const derivedStatus = resolveCollectionStatus(collection);
+    if (!isOrderable(derivedStatus)) {
+      throw HttpError.Forbidden(
+        'collection_not_orderable',
+        `Coleção ${collection.code} está em '${derivedStatus}'; duplicação de pedido permitida apenas em 'next' ou 'open'`,
+      );
     }
 
     const duplicated = await this.batches.findOne({

@@ -4,8 +4,12 @@ import { ImportBase } from '../../../entities/import-base.entity.js';
 import { Order } from '../../../entities/order.entity.js';
 import { Inject, Injectable } from '../../../utils/di.js';
 import { Task } from '../../../utils/task.js';
+import {
+  resolveCollectionStatus,
+  type DerivedCollectionStatus,
+} from '../../../utils/collection-status.js';
 
-export type SeasonStatus = 'next' | 'open' | 'delivery' | 'closed';
+export type SeasonStatus = DerivedCollectionStatus;
 
 interface SeasonOutput {
   collection_id: string;
@@ -16,21 +20,6 @@ interface SeasonOutput {
   delivery_window: { start: string | null; end: string | null };
   latest_version: { tag: string; date: string; by: string } | null;
   counts: { versions: number; tenants_with_orders: number; open_orders: number };
-}
-
-function resolveStatus(col: Collection, now: Date): SeasonStatus {
-  if (col.status === 'closed') return 'closed';
-  const orderStart = col.order_start_at?.getTime();
-  const orderEnd = col.order_end_at?.getTime();
-  const deliveryEnd = col.delivery_end_at?.getTime();
-  const t = now.getTime();
-
-  if (orderStart !== undefined && t < orderStart) return 'next';
-  if (orderEnd !== undefined && t <= orderEnd) return 'open';
-  if (deliveryEnd !== undefined && t <= deliveryEnd) return 'delivery';
-  if (deliveryEnd !== undefined && t > deliveryEnd) return 'closed';
-  // datas nulas → respeita status persistido (draft → next, open → open)
-  return col.status === 'open' ? 'open' : 'next';
 }
 
 @Injectable()
@@ -111,7 +100,7 @@ export class ListSeasonsTask extends Task<SeasonOutput[]> {
         collection_id: c.id,
         code: c.code,
         country: c.country,
-        status: resolveStatus(c, now),
+        status: resolveCollectionStatus(c, now),
         order_window: {
           start: c.order_start_at ? c.order_start_at.toISOString() : null,
           end: c.order_end_at ? c.order_end_at.toISOString() : null,
