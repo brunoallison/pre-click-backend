@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 
 const SHARE_DIMENSIONS = [
   'category',
@@ -9,6 +9,9 @@ const SHARE_DIMENSIONS = [
   'rrp_bucket',
 ] as const;
 export type ShareDimension = (typeof SHARE_DIMENSIONS)[number];
+
+const SHARE_METRICS = ['value', 'qty'] as const;
+export type ShareMetric = (typeof SHARE_METRICS)[number];
 
 export class DashboardQueryInput {
   @IsUUID()
@@ -21,6 +24,14 @@ export class SharesQueryInput {
 
   @IsIn(SHARE_DIMENSIONS)
   dimension!: ShareDimension;
+
+  @IsOptional()
+  @IsString()
+  division?: string;
+
+  @IsOptional()
+  @IsIn(SHARE_METRICS)
+  metric?: ShareMetric;
 }
 
 export class KpisQueryInput {
@@ -44,7 +55,8 @@ export interface DashboardSummaryOutput {
 export interface ShareItem {
   label: string;
   pct: number;
-  value_brl: number;
+  /** Valor agregado na métrica solicitada — BRL (metric=value, default) ou peças (metric=qty). */
+  value: number;
 }
 
 export interface DashboardKpisOutput {
